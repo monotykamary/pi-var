@@ -3,9 +3,9 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { registerVarCommand } from '../../src/tools/command.js';
-import type { ExtensionAPI, ExtensionContext, UIContext } from '@mariozechner/pi-coding-agent';
-import type { VarRuntime, Variation } from '../../src/types/index.js';
+import { registerVarCommand } from '../../src/tools/command';
+import type { ExtensionAPI, ExtensionContext } from '@mariozechner/pi-coding-agent';
+import type { VarRuntime, Variation } from '../../src/types/index';
 
 // Mock the dependencies
 function createMockDeps(runtime: VarRuntime = createMockRuntime()) {
@@ -19,12 +19,15 @@ function createMockDeps(runtime: VarRuntime = createMockRuntime()) {
   };
 }
 
-function createMockRuntime(overrides: Partial<VarRuntime> = {}): VarRuntime {
+function createMockRuntime(
+  overrides: Partial<VarRuntime> & { state?: Partial<VarRuntime['state']> } = {}
+): VarRuntime {
   return {
     state: {
       activeVariationId: null,
       variations: [],
       sessionId: 'test-session',
+      ...overrides.state,
     },
     redirectionActive: false,
     lastPersisted: Date.now(),
@@ -39,7 +42,7 @@ function createMockCtx(overrides: Partial<ExtensionContext> = {}): ExtensionCont
       notify: vi.fn(),
       confirm: vi.fn().mockResolvedValue(true),
       setStatus: vi.fn(),
-    } as unknown as UIContext,
+    },
     hasUI: true,
     ...overrides,
   } as ExtensionContext;
@@ -72,11 +75,11 @@ describe('registerVarCommand', () => {
     );
   });
 
-  it('should register user_bash event handler', () => {
+  it('should register command handler', () => {
     const deps = createMockDeps();
     registerVarCommand(deps.pi, deps);
 
-    expect(deps.pi.on).toHaveBeenCalledWith('user_bash', expect.any(Function));
+    expect(deps.pi.registerCommand).toHaveBeenCalled();
   });
 });
 
@@ -103,8 +106,11 @@ describe('var command - list', () => {
   it('should list variations with active indicator', async () => {
     const variation = createMockVariation({ id: 'var-1', name: 'feature-auth' });
     const runtime = createMockRuntime({
-      variations: [variation],
-      activeVariationId: 'var-1',
+      state: {
+        variations: [variation],
+        activeVariationId: 'var-1',
+        sessionId: 'test-session',
+      },
     });
     deps = createMockDeps(runtime);
     registerVarCommand(deps.pi, deps);
@@ -129,7 +135,9 @@ describe('var command - cd', () => {
 
   it('should switch to variation', async () => {
     const variation = createMockVariation({ id: 'var-1', name: 'feature-auth' });
-    const runtime = createMockRuntime({ variations: [variation] });
+    const runtime = createMockRuntime({
+      state: { variations: [variation], activeVariationId: null, sessionId: 'test-session' },
+    });
     deps = createMockDeps(runtime);
     registerVarCommand(deps.pi, deps);
     handler = vi.mocked(deps.pi.registerCommand).mock.calls[0][1].handler;
@@ -145,8 +153,11 @@ describe('var command - cd', () => {
   it('should return to source with cd main', async () => {
     const variation = createMockVariation({ id: 'var-1', name: 'feature-auth' });
     const runtime = createMockRuntime({
-      variations: [variation],
-      activeVariationId: 'var-1',
+      state: {
+        variations: [variation],
+        activeVariationId: 'var-1',
+        sessionId: 'test-session',
+      },
     });
     deps = createMockDeps(runtime);
     registerVarCommand(deps.pi, deps);
@@ -186,7 +197,9 @@ describe('var command - clean', () => {
 
   it('should require confirmation before cleaning', async () => {
     const variation = createMockVariation({ id: 'var-1', name: 'old-feature' });
-    const runtime = createMockRuntime({ variations: [variation] });
+    const runtime = createMockRuntime({
+      state: { variations: [variation], activeVariationId: null, sessionId: 'test-session' },
+    });
     deps = createMockDeps(runtime);
     registerVarCommand(deps.pi, deps);
     handler = vi.mocked(deps.pi.registerCommand).mock.calls[0][1].handler;

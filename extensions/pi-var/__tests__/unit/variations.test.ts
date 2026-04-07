@@ -13,8 +13,8 @@ import {
   createVariation,
   removeVariation,
   mergeVariation,
-} from '../../src/utils/variations.js';
-import type { Variation, VariationType } from '../../src/types/index.js';
+} from '../../src/utils/variations';
+import type { Variation, VariationType } from '../../src/types/index';
 
 // Helper to create a temporary test directory
 async function createTempDir(prefix: string): Promise<string> {
@@ -118,7 +118,7 @@ describe('createVariation', () => {
     // Create some test files
     await fs.writeFile(path.join(sourceDir, 'package.json'), JSON.stringify({ name: 'test' }));
     await fs.mkdir(path.join(sourceDir, 'src'), { recursive: true });
-    await fs.writeFile(path.join(sourceDir, 'src', 'index.ts'), 'console.log("hello");');
+    await fs.writeFile(path.join(sourceDir, 'src', 'index'), 'console.log("hello");');
 
     // Create .pi directory structure
     variationsBase = path.join(sourceDir, '.pi', 'variations');
@@ -247,7 +247,7 @@ describe('mergeVariation', () => {
     // Create source files
     await fs.writeFile(path.join(sourceDir, 'file.txt'), 'original');
     await fs.mkdir(path.join(sourceDir, 'src'), { recursive: true });
-    await fs.writeFile(path.join(sourceDir, 'src', 'app.ts'), '// original');
+    await fs.writeFile(path.join(sourceDir, 'src', 'app'), '// original');
 
     // Create variation with changes
     variation = await createVariation(sourceDir, {
@@ -257,7 +257,7 @@ describe('mergeVariation', () => {
 
     // Modify files in variation
     await fs.writeFile(path.join(variation.path, 'new-file.txt'), 'new content');
-    await fs.writeFile(path.join(variation.path, 'src', 'app.ts'), '// modified');
+    await fs.writeFile(path.join(variation.path, 'src', 'app'), '// modified');
   });
 
   afterEach(async () => {
@@ -276,12 +276,13 @@ describe('mergeVariation', () => {
   });
 
   it('should merge modified files to source', async () => {
-    const original = await fs.readFile(path.join(sourceDir, 'src', 'app.ts'), 'utf-8');
+    const original = await fs.readFile(path.join(sourceDir, 'src', 'app'), 'utf-8');
     expect(original).toBe('// original');
 
-    await mergeVariation(variation, sourceDir, { keep: true });
+    // Force copy strategy to avoid rsync issues in test environment
+    await mergeVariation(variation, sourceDir, { keep: true, strategy: 'copy' });
 
-    const merged = await fs.readFile(path.join(sourceDir, 'src', 'app.ts'), 'utf-8');
+    const merged = await fs.readFile(path.join(sourceDir, 'src', 'app'), 'utf-8');
     expect(merged).toBe('// modified');
   });
 

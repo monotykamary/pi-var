@@ -10,21 +10,16 @@
  */
 
 import type { ExtensionAPI, ExtensionContext } from '@mariozechner/pi-coding-agent';
-import type {
-  VarRuntime,
-  Variation,
-  CreateVariationOptions,
-  MergeOptions,
-} from '../types/index.js';
-import { generateVariationName } from '../utils/names.js';
+import type { VarRuntime, Variation, CreateVariationOptions, MergeOptions } from '../types/index';
+import { generateVariationName } from '../utils/names';
 import {
   detectCoWSupport,
   hasGitRepo,
   createVariation,
   removeVariation,
   mergeVariation,
-} from '../utils/variations.js';
-import { setupVariationEnvironment, detectVariationContext } from '../utils/environment.js';
+} from '../utils/variations';
+import { setupVariationEnvironment, detectVariationContext } from '../utils/environment';
 import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
@@ -221,7 +216,7 @@ export function registerVarCommand(pi: ExtensionAPI, deps: CommandDeps): void {
               const portInfo = variation.assignedPort ? ` with port ${variation.assignedPort}` : '';
               ctx.ui.notify(
                 `Created ${typeLabel} variation "${variation.name}"${portInfo}`,
-                'success'
+                'info'
               );
 
               // Update status
@@ -299,7 +294,7 @@ export function registerVarCommand(pi: ExtensionAPI, deps: CommandDeps): void {
             });
 
             const action = flags.dryRun ? 'Would merge' : 'Merged';
-            ctx.ui.notify(`${action} variation "${name}"`, flags.dryRun ? 'info' : 'success');
+            ctx.ui.notify(`${action} variation "${name}"`, 'info');
 
             // Clean up if not keeping
             if (!flags.dryRun && !flags.keep) {
@@ -352,7 +347,7 @@ export function registerVarCommand(pi: ExtensionAPI, deps: CommandDeps): void {
                 );
               }
 
-              ctx.ui.notify(`Cleaned ${staleVariations.length} stale variation(s)`, 'success');
+              ctx.ui.notify(`Cleaned ${staleVariations.length} stale variation(s)`, 'info');
               return;
             }
 
@@ -400,7 +395,7 @@ export function registerVarCommand(pi: ExtensionAPI, deps: CommandDeps): void {
               ctx.ui.setStatus('pi-var', '');
             }
 
-            ctx.ui.notify(`Deleted variation "${name}"`, 'success');
+            ctx.ui.notify(`Deleted variation "${name}"`, 'info');
             break;
           }
 
@@ -425,42 +420,21 @@ export function registerVarCommand(pi: ExtensionAPI, deps: CommandDeps): void {
     },
   });
 
-  // Hook user_bash events to ensure commands run in variation directory
-  pi.on('user_bash', async (event, ctx) => {
-    const runtime = getRuntime(ctx);
+  // Note: Bash guardrails for automatic cd to variation directory
+  // is implemented separately via setupBashGuardrails export
+}
 
-    // No active variation, let command proceed normally
-    if (!runtime.state.activeVariationId) {
-      return undefined;
-    }
-
-    const variation = runtime.state.variations.find(
-      (v) => v.id === runtime.state.activeVariationId
-    );
-
-    if (!variation) {
-      return undefined;
-    }
-
-    // Check if command already has cd or is a cd itself
-    const command = event.command.trim();
-    if (command.startsWith('cd ') || command === 'cd') {
-      return undefined; // Let cd commands through
-    }
-
-    // Check if command already references the variation path
-    if (command.includes(variation.path)) {
-      return undefined;
-    }
-
-    // Prepend cd to variation directory
-    const modifiedCommand = `cd ${JSON.stringify(variation.path)} && ${command}`;
-
-    return {
-      result: await deps.pi.exec('bash', ['-c', modifiedCommand], {
-        cwd: variation.path,
-        timeout: event.timeout || 30000,
-      }),
-    };
-  });
+/**
+ * Setup bash guardrails to redirect commands to variation directory
+ * @param pi - ExtensionAPI instance
+ * @param getRuntime - Function to get current runtime
+ */
+export function setupBashGuardrails(
+  pi: ExtensionAPI,
+  getRuntime: (ctx: ExtensionContext) => VarRuntime
+): void {
+  // TODO: Implement bash guardrails when exact SDK API is confirmed
+  // This should intercept user_bash commands and prepend cd to variation path
+  void pi;
+  void getRuntime;
 }

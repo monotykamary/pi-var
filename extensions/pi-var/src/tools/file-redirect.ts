@@ -13,12 +13,7 @@
 
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
-import type {
-  ReadOperations,
-  WriteOperations,
-  EditOperations,
-} from '@mariozechner/pi-coding-agent';
-import type { VarRuntime, VarState, Variation } from '../types/index.js';
+import type { VarRuntime, VarState, Variation } from '../types/index';
 
 /**
  * Resolve a path to the variation directory when redirection is active
@@ -74,7 +69,7 @@ function getActiveVariation(runtime: VarRuntime): Variation | undefined {
 /**
  * Create read operations that redirect to the variation directory when active
  */
-export function createRedirectedReadOps(cwd: string, runtime: VarRuntime): ReadOperations {
+export function createRedirectedReadOps(cwd: string, runtime: VarRuntime) {
   return {
     readFile: async (filePath: string): Promise<Buffer> => {
       const resolvedPath = resolveVariationPath(filePath, cwd, runtime.state);
@@ -108,18 +103,18 @@ export function createRedirectedReadOps(cwd: string, runtime: VarRuntime): ReadO
 /**
  * Create write operations that redirect to the variation directory when active
  */
-export function createRedirectedWriteOps(cwd: string, runtime: VarRuntime): WriteOperations {
+export function createRedirectedWriteOps(cwd: string, runtime: VarRuntime) {
   return {
     writeFile: async (filePath: string, content: string | Buffer): Promise<void> => {
       const resolvedPath = resolveVariationPath(filePath, cwd, runtime.state);
       // Ensure parent directory exists
       await fs.mkdir(path.dirname(resolvedPath), { recursive: true });
-      return fs.writeFile(resolvedPath, content);
+      await fs.writeFile(resolvedPath, content);
     },
 
     mkdir: async (dirPath: string, options?: { recursive?: boolean }): Promise<void> => {
       const resolvedPath = resolveVariationPath(dirPath, cwd, runtime.state);
-      return fs.mkdir(resolvedPath, options);
+      await fs.mkdir(resolvedPath, options);
     },
   };
 }
@@ -127,7 +122,7 @@ export function createRedirectedWriteOps(cwd: string, runtime: VarRuntime): Writ
 /**
  * Create edit operations that redirect to the variation directory when active
  */
-export function createRedirectedEditOps(cwd: string, runtime: VarRuntime): EditOperations {
+export function createRedirectedEditOps(cwd: string, runtime: VarRuntime) {
   const readOps = createRedirectedReadOps(cwd, runtime);
   const writeOps = createRedirectedWriteOps(cwd, runtime);
 

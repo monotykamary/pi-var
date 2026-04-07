@@ -4,13 +4,13 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import path from 'node:path';
-import type { VarState, VarRuntime, Variation } from '../../src/types/index.js';
+import type { VarState, VarRuntime, Variation } from '../../src/types/index';
 import {
   resolveVariationPath,
   createRedirectedReadOps,
   createRedirectedWriteOps,
   createRedirectedEditOps,
-} from '../../src/tools/file-redirect.js';
+} from '../../src/tools/file-redirect';
 
 // Mock runtime factory
 function createMockRuntime(overrides: Partial<VarRuntime> = {}): VarRuntime {
@@ -54,13 +54,13 @@ describe('resolveVariationPath', () => {
 
   describe('when no variation is active', () => {
     it('returns relative paths unchanged', () => {
-      const inputPath = 'src/components/Button.ts';
+      const inputPath = 'src/components/Button';
       const result = resolveVariationPath(inputPath, cwd, state);
       expect(result).toBe(inputPath);
     });
 
     it('returns absolute paths unchanged', () => {
-      const inputPath = '/home/user/project/src/Button.ts';
+      const inputPath = '/home/user/project/src/Button';
       const result = resolveVariationPath(inputPath, cwd, state);
       expect(result).toBe(inputPath);
     });
@@ -75,9 +75,9 @@ describe('resolveVariationPath', () => {
 
     describe('relative paths', () => {
       it('resolves relative paths against variation path', () => {
-        const inputPath = 'src/components/Button.ts';
+        const inputPath = 'src/components/Button';
         const result = resolveVariationPath(inputPath, cwd, state);
-        expect(result).toBe('/tmp/variations/test-var/src/components/Button.ts');
+        expect(result).toBe('/tmp/variations/test-var/src/components/Button');
       });
 
       it('handles dot-relative paths', () => {
@@ -88,18 +88,18 @@ describe('resolveVariationPath', () => {
       });
 
       it('handles parent-relative paths', () => {
-        const inputPath = '../shared/utils.ts';
+        const inputPath = '../shared/utils';
         const result = resolveVariationPath(inputPath, cwd, state);
         // path.normalize will resolve ../
-        expect(result).toBe('/tmp/variations/shared/utils.ts');
+        expect(result).toBe('/tmp/variations/shared/utils');
       });
     });
 
     describe('absolute paths in source directory', () => {
       it('redirects source file paths to variation', () => {
-        const inputPath = '/home/user/project/src/Button.ts';
+        const inputPath = '/home/user/project/src/Button';
         const result = resolveVariationPath(inputPath, cwd, state);
-        expect(result).toBe('/tmp/variations/test-var/src/Button.ts');
+        expect(result).toBe('/tmp/variations/test-var/src/Button');
       });
 
       it('redirects source root files', () => {
@@ -109,15 +109,15 @@ describe('resolveVariationPath', () => {
       });
 
       it('handles paths in subdirectories', () => {
-        const inputPath = '/home/user/project/src/components/nested/DeepComponent.ts';
+        const inputPath = '/home/user/project/src/components/nested/DeepComponent';
         const result = resolveVariationPath(inputPath, cwd, state);
-        expect(result).toBe('/tmp/variations/test-var/src/components/nested/DeepComponent.ts');
+        expect(result).toBe('/tmp/variations/test-var/src/components/nested/DeepComponent');
       });
     });
 
     describe('absolute paths already in variation', () => {
       it('keeps variation paths as-is', () => {
-        const inputPath = '/tmp/variations/test-var/src/Button.ts';
+        const inputPath = '/tmp/variations/test-var/src/Button';
         const result = resolveVariationPath(inputPath, cwd, state);
         expect(result).toBe(inputPath);
       });
@@ -158,15 +158,15 @@ describe('resolveVariationPath', () => {
       });
 
       it('handles paths with spaces', () => {
-        const inputPath = '/home/user/project/src/my file.ts';
+        const inputPath = '/home/user/project/src/my file';
         const result = resolveVariationPath(inputPath, cwd, state);
-        expect(result).toBe('/tmp/variations/test-var/src/my file.ts');
+        expect(result).toBe('/tmp/variations/test-var/src/my file');
       });
 
       it('handles paths with special characters', () => {
-        const inputPath = '/home/user/project/src/file[name].ts';
+        const inputPath = '/home/user/project/src/file[name]';
         const result = resolveVariationPath(inputPath, cwd, state);
-        expect(result).toBe('/tmp/variations/test-var/src/file[name].ts');
+        expect(result).toBe('/tmp/variations/test-var/src/file[name]');
       });
 
       it('handles empty string paths', () => {
@@ -183,7 +183,7 @@ describe('resolveVariationPath', () => {
       state.activeVariationId = 'non-existent-id';
       state.variations = []; // Empty variations array
 
-      const inputPath = 'src/Button.ts';
+      const inputPath = 'src/Button';
       const result = resolveVariationPath(inputPath, cwd, state);
       expect(result).toBe(inputPath);
     });

@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import { createRuntimeStore, getSessionKey, type ExtensionContext } from '../../src/state/store.js';
-import type { VarRuntime } from '../../src/types/index.js';
+import { createRuntimeStore, getSessionKey, type ExtensionContext } from '../../src/state/store';
+import type { VarRuntime } from '../../src/types/index';
 
 describe('RuntimeStore', () => {
   let store: ReturnType<typeof createRuntimeStore>;

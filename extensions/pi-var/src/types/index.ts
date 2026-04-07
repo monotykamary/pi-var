@@ -72,8 +72,8 @@ export interface MergeOptions {
   dryRun?: boolean;
   /** Keep variation after merge */
   keep?: boolean;
-  /** Merge strategy: 'auto' | 'git' | 'rsync' */
-  strategy?: 'auto' | 'git' | 'rsync';
+  /** Merge strategy: 'auto' | 'git' | 'rsync' | 'copy' */
+  strategy?: 'auto' | 'git' | 'rsync' | 'copy';
 }
 
 /** Context detection result */

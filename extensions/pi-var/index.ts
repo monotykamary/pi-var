@@ -10,13 +10,13 @@
  */
 
 import type { ExtensionAPI, ExtensionContext } from '@mariozechner/pi-coding-agent';
-import type { VarRuntime, VarState, Variation } from './types/index.js';
-import { generateVariationId, generateVariationName } from './utils/names.js';
-import { getSessionKey, createRuntimeStore } from './state/store.js';
-import { registerVarCommand } from './tools/command.js';
-import { registerRedirectedFileTools } from './tools/index.js';
-import { setupVariationEnvironment, detectVariationContext } from './utils/environment.js';
-import { createVariation, removeVariation, mergeVariation } from './utils/variations.js';
+import type { VarRuntime, VarState, Variation } from './src/types/index';
+import { generateVariationId, generateVariationName } from './src/utils/names';
+import { getSessionKey, createRuntimeStore } from './src/state/store';
+import { registerVarCommand } from './src/tools/command';
+import { registerRedirectedFileTools } from './src/tools/index';
+import { setupVariationEnvironment, detectVariationContext } from './src/utils/environment';
+import { createVariation, removeVariation, mergeVariation } from './src/utils/variations';
 
 // Default configuration
 const DEFAULT_CONFIG = {

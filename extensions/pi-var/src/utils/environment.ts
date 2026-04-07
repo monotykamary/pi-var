@@ -6,7 +6,7 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import type { Variation, VarConfig, VariationContext } from '../types/index.js';
+import type { Variation, VarConfig, VariationContext } from '../types/index';
 
 const execAsync = promisify(exec);
 
@@ -261,7 +261,7 @@ export async function symlinkHeavyDirs(
 /**
  * Remove symlinks from a variation (before merge or delete)
  */
-export async function removeSymlinks(variation: string): Promise<void> {
+async function removeSymlinks(variation: string): Promise<void> {
   try {
     const entries = await fs.readdir(variation, { withFileTypes: true });
 

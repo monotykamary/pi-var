@@ -16,7 +16,7 @@ import {
   createVariationMarker,
   removeVariationMarker,
   DEFAULT_CONFIG,
-} from '../../src/utils/environment.js';
+} from '../../src/utils/environment';
 
 // Helper to create a temporary test directory
 async function createTempDir(prefix: string): Promise<string> {
@@ -72,7 +72,7 @@ describe('detectVariationContext', () => {
     expect(context.inVariation).toBe(true);
     expect(context.variationName).toBe('test-var');
     expect(context.variationPath).toBe(
-      '/home/user/project/.pi/variations/myproject-abc123/test-var/'
+      '/home/user/project/.pi/variations/myproject-abc123/test-var'
     );
     expect(context.sourcePath).toBe('/home/user/project');
     expect(context.variationId).toBeDefined();

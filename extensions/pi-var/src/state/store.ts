@@ -2,7 +2,7 @@
  * Runtime store for per-session VarRuntime management
  */
 
-import type { VarRuntime, VarState } from '../types/index.js';
+import type { VarRuntime, VarState } from '../types/index';
 
 /**
  * Extension context interface for session key extraction
@@ -16,7 +16,7 @@ export interface ExtensionContext {
 /**
  * Runtime store interface for managing per-session VarRuntime instances
  */
-export interface RuntimeStore {
+interface RuntimeStore {
   /**
    * Ensure a VarRuntime exists for the given session key,
    * creating one if it doesn't exist
