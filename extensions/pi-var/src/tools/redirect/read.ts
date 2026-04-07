@@ -2,8 +2,12 @@
  * Read tool override for variation redirection
  */
 
-import type { ExtensionAPI, ExtensionContext } from '@mariozechner/pi-coding-agent';
-import { createReadTool } from '@mariozechner/pi-coding-agent';
+import type {
+  ExtensionAPI,
+  ExtensionContext,
+  AgentToolUpdateCallback,
+} from '@mariozechner/pi-coding-agent';
+import { createReadTool, type ReadToolInput } from '@mariozechner/pi-coding-agent';
 import type { VarRuntime } from '../../types/index';
 import { createRedirectedReadOps } from '../file-redirect';
 
@@ -25,9 +29,9 @@ export function createReadHandler(
 
     async execute(
       toolCallId: string,
-      params: unknown,
+      params: ReadToolInput,
       signal: AbortSignal,
-      onUpdate: unknown,
+      onUpdate: AgentToolUpdateCallback<unknown> | undefined,
       ctx: ExtensionContext
     ) {
       const runtime = getRuntime(ctx);

@@ -2,8 +2,12 @@
  * Write tool override for variation redirection
  */
 
-import type { ExtensionAPI, ExtensionContext } from '@mariozechner/pi-coding-agent';
-import { createWriteTool } from '@mariozechner/pi-coding-agent';
+import type {
+  ExtensionAPI,
+  ExtensionContext,
+  AgentToolUpdateCallback,
+} from '@mariozechner/pi-coding-agent';
+import { createWriteTool, type WriteToolInput } from '@mariozechner/pi-coding-agent';
 import type { VarRuntime } from '../../types/index';
 import { createRedirectedWriteOps } from '../file-redirect';
 
@@ -24,9 +28,9 @@ export function createWriteHandler(
 
     async execute(
       toolCallId: string,
-      params: unknown,
+      params: WriteToolInput,
       signal: AbortSignal,
-      onUpdate: unknown,
+      onUpdate: AgentToolUpdateCallback<unknown> | undefined,
       ctx: ExtensionContext
     ) {
       const runtime = getRuntime(ctx);

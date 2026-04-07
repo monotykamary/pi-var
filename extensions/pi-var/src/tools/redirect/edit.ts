@@ -2,8 +2,12 @@
  * Edit tool override for variation redirection
  */
 
-import type { ExtensionAPI, ExtensionContext } from '@mariozechner/pi-coding-agent';
-import { createEditTool } from '@mariozechner/pi-coding-agent';
+import type {
+  ExtensionAPI,
+  ExtensionContext,
+  AgentToolUpdateCallback,
+} from '@mariozechner/pi-coding-agent';
+import { createEditTool, type EditToolInput } from '@mariozechner/pi-coding-agent';
 import type { VarRuntime } from '../../types/index';
 import { createRedirectedEditOps } from '../file-redirect';
 
@@ -24,9 +28,9 @@ export function createEditHandler(
 
     async execute(
       toolCallId: string,
-      params: unknown,
+      params: EditToolInput,
       signal: AbortSignal,
-      onUpdate: unknown,
+      onUpdate: AgentToolUpdateCallback<unknown> | undefined,
       ctx: ExtensionContext
     ) {
       const runtime = getRuntime(ctx);

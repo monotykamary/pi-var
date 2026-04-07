@@ -2,8 +2,16 @@
  * Bash tool override for variation redirection
  */
 
-import type { ExtensionAPI, ExtensionContext } from '@mariozechner/pi-coding-agent';
-import { createBashTool, type BashSpawnContext } from '@mariozechner/pi-coding-agent';
+import type {
+  ExtensionAPI,
+  ExtensionContext,
+  AgentToolUpdateCallback,
+} from '@mariozechner/pi-coding-agent';
+import {
+  createBashTool,
+  type BashSpawnContext,
+  type BashToolInput,
+} from '@mariozechner/pi-coding-agent';
 import type { VarRuntime } from '../../types/index';
 
 export function createBashHandler(
@@ -23,9 +31,9 @@ export function createBashHandler(
 
     async execute(
       toolCallId: string,
-      params: unknown,
+      params: BashToolInput,
       signal: AbortSignal,
-      onUpdate: unknown,
+      onUpdate: AgentToolUpdateCallback<unknown> | undefined,
       ctx: ExtensionContext
     ) {
       const runtime = getRuntime(ctx);
