@@ -21,13 +21,13 @@ You just say what you want. The AI manages the workspace.
 ## Installation
 
 ```bash
-pi install npm:pi-var
+pi install https://github.com/monotykamary/pi-var
 ```
 
 Or project-local:
 
 ```bash
-pi install -l npm:pi-var
+pi install -l https://github.com/monotykamary/pi-var
 ```
 
 ## Usage
