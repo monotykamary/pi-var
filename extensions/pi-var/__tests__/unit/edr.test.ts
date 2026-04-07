@@ -3,7 +3,8 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { hasSlowCoWEDR, getEDRSummary, type EDRDetectionResult } from '../../src/edr/index';
+import type { EDRDetectionResult } from '../../src/types/index';
+import { hasSlowCoWEDR, getEDRSummary } from '../../src/edr/index';
 
 describe('hasSlowCoWEDR', () => {
   it('should return true when known slow CoW EDR is detected', () => {

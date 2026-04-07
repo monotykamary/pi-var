@@ -64,8 +64,9 @@ export async function symlinkHeavyDirs(
 
 /**
  * Remove symlinks from a variation (before merge or delete)
+ * @internal Not currently used but kept for future cleanup operations
  */
-export async function removeSymlinks(variation: string): Promise<void> {
+async function removeSymlinks(variation: string): Promise<void> {
   try {
     const entries = await fs.readdir(variation, { withFileTypes: true });
 

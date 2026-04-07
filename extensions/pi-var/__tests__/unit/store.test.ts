@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import type { RuntimeStore } from '../../src/state/types';
 import {
   createRuntimeStore,
   getSessionKey,
