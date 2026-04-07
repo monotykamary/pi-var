@@ -16,7 +16,7 @@ import {
   createVariationMarker,
   removeVariationMarker,
   DEFAULT_CONFIG,
-} from '../../src/utils/environment';
+} from '../../src/environment/index';
 
 // Helper to create a temporary test directory
 async function createTempDir(prefix: string): Promise<string> {

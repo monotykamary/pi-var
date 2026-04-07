@@ -63,7 +63,7 @@ describe('registerRedirectedTools', () => {
 
   // Lazy import to get mocked SDK
   const importModule = async () => {
-    const { registerRedirectedTools } = await import('../../src/tools/index');
+    const { registerRedirectedTools } = await import('../../src/tools/redirect/index');
     return { registerRedirectedTools };
   };
 

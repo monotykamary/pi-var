@@ -8,7 +8,7 @@ import {
   getSessionKey,
   type ExtensionContext,
   type SessionManager,
-} from '../../src/state/store';
+} from '../../src/state/index';
 import type { VarRuntime, Variation } from '../../src/types/index';
 import type { ExtensionAPI } from '@mariozechner/pi-coding-agent';
 

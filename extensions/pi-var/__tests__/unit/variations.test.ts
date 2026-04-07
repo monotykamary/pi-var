@@ -13,8 +13,8 @@ import {
   createVariation,
   removeVariation,
   mergeVariation,
-} from '../../src/utils/variations';
-import type { Variation, VariationType } from '../../src/types/index';
+} from '../../src/variation/index';
+import type { Variation } from '../../src/types/index';
 
 // Helper to create a temporary test directory
 async function createTempDir(prefix: string): Promise<string> {

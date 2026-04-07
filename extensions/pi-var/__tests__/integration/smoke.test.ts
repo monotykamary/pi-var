@@ -66,7 +66,7 @@ describe('pi-var smoke tests', () => {
 
       expect(fs.existsSync(join(extensionPath, 'index.ts'))).toBe(true);
       expect(fs.existsSync(join(extensionPath, 'src', 'types', 'index.ts'))).toBe(true);
-      expect(fs.existsSync(join(extensionPath, 'src', 'tools', 'command.ts'))).toBe(true);
+      expect(fs.existsSync(join(extensionPath, 'src', 'tools', 'command', 'index.ts'))).toBe(true);
       expect(fs.existsSync(join(extensionPath, 'src', 'state', 'store.ts'))).toBe(true);
     });
   });
@@ -81,7 +81,7 @@ describe('pi-var smoke tests', () => {
 
   describe('State management', () => {
     it('should create runtime store', async () => {
-      const { createRuntimeStore, getSessionKey } = await import('../../src/state/store.js');
+      const { createRuntimeStore, getSessionKey } = await import('../../src/state/index.js');
 
       const store = createRuntimeStore();
       expect(store).toHaveProperty('ensure');
@@ -160,14 +160,14 @@ describe('pi-var smoke tests', () => {
 
   describe('Command registration', () => {
     it('should export registerVarCommand', async () => {
-      const command = await import('../../src/tools/command.js');
+      const command = await import('../../src/tools/command/index.js');
 
       expect(command).toHaveProperty('registerVarCommand');
       expect(typeof command.registerVarCommand).toBe('function');
     });
 
     it('should accept ExtensionAPI and dependencies', async () => {
-      const { registerVarCommand } = await import('../../src/tools/command.js');
+      const { registerVarCommand } = await import('../../src/tools/command/index.js');
 
       const mockPi = {
         registerCommand: () => {},
@@ -252,7 +252,7 @@ describe('pi-var smoke tests', () => {
 
   describe('Portless integration (mocked)', () => {
     it('should handle missing portless gracefully', async () => {
-      const { registerVarCommand } = await import('../../src/tools/command.js');
+      const { registerVarCommand } = await import('../../src/tools/command/index.js');
 
       const mockRuntime = {
         state: { activeVariationId: null, variations: [], sessionId: 'test' },
