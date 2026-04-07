@@ -6,16 +6,15 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { exec } from 'child_process';
 import { promisify } from 'util';
-import type { Variation, VarConfig, VariationContext } from '../types/index';
+import type { VarConfig, VariationContext } from '../types/index';
 
 const execAsync = promisify(exec);
 
 // Default configuration for environment sync
-export const DEFAULT_CONFIG: VarConfig = {
+export const DEFAULT_CONFIG = {
   copy: ['.env', '.env.*', '.envrc', '.npmrc', '.tool-versions'],
   symlink: ['node_modules', '.next', '.nuxt', 'target', '.venv'],
   postCreate: [],
-  usePortless: false,
 };
 
 /**

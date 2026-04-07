@@ -1,22 +1,26 @@
 /**
- * pi-var — Copy-on-write variations extension
+ * pi-var — Copy-on-write variations extension (autoregressive)
  *
- * Provides:
- * - /var command — create, switch, merge, clean variations
+ * AI-driven variation management:
+ * - create_variation tool — AI creates variations automatically
+ * - /var command — argument-free status and manual override
  * - File redirection — transparent read/edit/write to active variation
  * - Status indicator — footer shows current variation
  * - Environment sync — copy .env, symlink node_modules
- * - Portless integration — isolated mode with unique ports
+ *
+ * Port isolation is handled by the AI via bash (portless), not extension code.
  */
 
 import type { ExtensionAPI, ExtensionContext } from '@mariozechner/pi-coding-agent';
-import type { VarRuntime, VarState, Variation } from './src/types/index';
-import { generateVariationId, generateVariationName } from './src/utils/names';
+import type { VarRuntime, Variation } from './src/types/index';
+import { generateVariationName } from './src/utils/names';
 import { getSessionKey, createRuntimeStore } from './src/state/store';
 import { registerVarCommand } from './src/tools/command';
 import { registerRedirectedFileTools } from './src/tools/index';
 import { setupVariationEnvironment, detectVariationContext } from './src/utils/environment';
-import { createVariation, removeVariation, mergeVariation } from './src/utils/variations';
+import { createVariation, mergeVariation } from './src/utils/variations';
+import { Type } from '@sinclair/typebox';
+import path from 'path';
 
 // Default configuration
 const DEFAULT_CONFIG = {
@@ -44,7 +48,6 @@ const DEFAULT_CONFIG = {
     'vendor',
   ],
   postCreate: [],
-  usePortless: false,
 };
 
 export default function piVarExtension(pi: ExtensionAPI) {
@@ -52,7 +55,7 @@ export default function piVarExtension(pi: ExtensionAPI) {
   const runtimeStore = createRuntimeStore();
   const getRuntime = (ctx: ExtensionContext): VarRuntime => runtimeStore.ensure(getSessionKey(ctx));
 
-  // Register /var command (includes bash guardrails)
+  // Register /var command (argument-free, status/overview)
   registerVarCommand(pi, { getRuntime, pi });
 
   // Register redirected file tools (only when in variation)
@@ -115,24 +118,176 @@ You are currently working in a variation: "${variation.name}"
 - Type: ${variation.type === 'cow' ? 'Copy-on-Write clone' : variation.type === 'worktree' ? 'Git worktree' : 'Full copy'}
 
 All file operations (read, edit, write) and bash commands are automatically redirected to the variation directory.
-When finished, use /var merge ${variation.name} to merge changes back to the source.
+When finished, use the merge_variation tool to merge changes back to the source.
 `,
     };
   });
 
-  // Clean up on session end
-  pi.on('session_shutdown', async (_event, ctx) => {
-    const runtime = getRuntime(ctx);
-    // No need to clean files - per-session variations are ephemeral
-    // But we should stop portless processes
-    for (const v of runtime.state.variations) {
-      if (v.portlessPid) {
-        try {
-          process.kill(v.portlessPid, 'SIGTERM');
-        } catch {
-          // Process may already be dead
-        }
+  // ---- Tool: AI creates variations automatically ----
+
+  pi.registerTool({
+    name: 'create_variation',
+    label: 'Create Variation',
+    description:
+      'Create a copy-on-write variation for isolated development work. ' +
+      'Auto-generates a semantic name from the purpose. ' +
+      'Auto-detects best method: CoW (APFS clonefile/Linux reflink) > Git worktree > Full copy. ' +
+      'All file operations automatically redirect to the variation. ' +
+      'For port isolation (dev servers), run `npx portless --json` via bash and set PORT from result.',
+    parameters: Type.Object({
+      purpose: Type.String({
+        description:
+          'Brief description of what this variation is for (e.g., "fix auth bug", "experiment with new UI"). ' +
+          'Used to auto-generate a semantic name.',
+      }),
+      type: Type.Optional(
+        Type.Union([Type.Literal('cow'), Type.Literal('worktree'), Type.Literal('copy')], {
+          description:
+            'Optional: Force specific creation method. If omitted, auto-detects best available.',
+        })
+      ),
+      createBranch: Type.Optional(
+        Type.Boolean({
+          default: false,
+          description: 'For worktrees: create a git branch (var/<name>) for this variation.',
+        })
+      ),
+    }),
+    execute: async (_toolCallId, params, _signal, _onUpdate, ctx) => {
+      const text = (msg: string) => ({
+        content: [{ type: 'text' as const, text: msg }],
+        details: undefined,
+      });
+
+      const runtime = getRuntime(ctx);
+
+      // Auto-generate name from purpose
+      const semanticName = params.purpose
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+        .slice(0, 30);
+      const variationName = semanticName || generateVariationName();
+
+      // Check for existing
+      const existing = runtime.state.variations.find((v) => v.name === variationName);
+      if (existing) {
+        return text(
+          `Variation "${variationName}" already exists. ` +
+            `Switch to it with the variation context, or create with a different purpose.`
+        );
       }
-    }
+
+      try {
+        // Create variation
+        const variation = await createVariation(ctx.cwd, {
+          name: variationName,
+          type: params.type,
+          createBranch: params.createBranch,
+        });
+
+        // Setup environment
+        await setupVariationEnvironment(ctx.cwd, variation.path, DEFAULT_CONFIG);
+
+        // Add to runtime and activate
+        runtime.state.variations.push(variation);
+        runtime.state.activeVariationId = variation.id;
+        runtime.redirectionActive = true;
+
+        // Update status
+        const project = path.basename(variation.sourcePath);
+        ctx.ui.setStatus('pi-var', `📦 ${project} • 🌿 ${variation.name}`);
+
+        const typeLabel =
+          variation.type === 'cow'
+            ? 'CoW clone'
+            : variation.type === 'worktree'
+              ? 'Git worktree'
+              : 'Full copy';
+
+        return text(
+          `Created ${typeLabel} variation "${variation.name}" for: ${params.purpose}\n` +
+            `Path: ${variation.path}\n\n` +
+            `All file operations now redirect to this variation.` +
+            (variation.type === 'worktree' && variation.branchName
+              ? `\nBranch: ${variation.branchName}`
+              : '')
+        );
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return text(`Failed to create variation: ${message}`);
+      }
+    },
+  });
+
+  // ---- Tool: Merge variation back to source ----
+
+  pi.registerTool({
+    name: 'merge_variation',
+    label: 'Merge Variation',
+    description:
+      'Merge changes from the current variation back to the source directory. ' +
+      'Auto-selects merge strategy: git (for worktrees) > rsync > copy. ' +
+      'By default, removes the variation after merge (use keep: true to preserve).',
+    parameters: Type.Object({
+      dryRun: Type.Optional(
+        Type.Boolean({
+          default: false,
+          description: 'Preview what would be merged without applying changes.',
+        })
+      ),
+      keep: Type.Optional(
+        Type.Boolean({
+          default: false,
+          description: 'Keep the variation directory after merge (do not delete).',
+        })
+      ),
+    }),
+    execute: async (_toolCallId, params, _signal, _onUpdate, ctx) => {
+      const text = (msg: string) => ({
+        content: [{ type: 'text' as const, text: msg }],
+        details: undefined,
+      });
+
+      const runtime = getRuntime(ctx);
+      const activeId = runtime.state.activeVariationId;
+
+      if (!activeId) {
+        return text('No active variation to merge. Create one with create_variation first.');
+      }
+
+      const variation = runtime.state.variations.find((v) => v.id === activeId);
+      if (!variation) {
+        return text('Active variation not found in state. This is a bug.');
+      }
+
+      try {
+        await mergeVariation(variation, ctx.cwd, {
+          dryRun: params.dryRun,
+          keep: params.keep,
+        });
+
+        // Update state
+        if (!params.keep && !params.dryRun) {
+          runtime.state.variations = runtime.state.variations.filter((v) => v.id !== activeId);
+          runtime.state.activeVariationId = null;
+          runtime.redirectionActive = false;
+          ctx.ui.setStatus('pi-var', '');
+        }
+
+        const action = params.dryRun ? 'Would merge' : 'Merged';
+        const cleanup = !params.keep && !params.dryRun ? ' Variation cleaned up.' : '';
+
+        return text(`${action} variation "${variation.name}" to source.${cleanup}`);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        return text(`Failed to merge variation: ${message}`);
+      }
+    },
+  });
+
+  // Session end - variations persist on disk, no cleanup needed
+  pi.on('session_shutdown', async () => {
+    // Variations are persisted to disk and can be reconnected in new sessions
   });
 }

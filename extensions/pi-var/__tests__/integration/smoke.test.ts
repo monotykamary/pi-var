@@ -162,9 +162,7 @@ describe('pi-var smoke tests', () => {
       const command = await import('../../src/tools/command.js');
 
       expect(command).toHaveProperty('registerVarCommand');
-      expect(command).toHaveProperty('setupBashGuardrails');
       expect(typeof command.registerVarCommand).toBe('function');
-      expect(typeof command.setupBashGuardrails).toBe('function');
     });
 
     it('should accept ExtensionAPI and dependencies', async () => {
@@ -285,35 +283,5 @@ describe('pi-var smoke tests', () => {
       // Extension should still be functional
       expect(mockRuntime.state.variations.length).toBeGreaterThanOrEqual(0);
     });
-  });
-});
-
-describe('Bash guardrails smoke test', () => {
-  it('should export setupBashGuardrails function', async () => {
-    const { setupBashGuardrails } = await import('../../src/tools/command.js');
-    expect(typeof setupBashGuardrails).toBe('function');
-  });
-
-  it('should accept ExtensionAPI and getRuntime parameters', async () => {
-    const { setupBashGuardrails } = await import('../../src/tools/command.js');
-
-    const mockPi = {
-      on: vi.fn(),
-    };
-
-    const mockRuntime = {
-      state: {
-        activeVariationId: 'var-1',
-        variations: [],
-        sessionId: 'test',
-      },
-      redirectionActive: true,
-      lastPersisted: Date.now(),
-    };
-
-    // Should not throw
-    expect(() => {
-      setupBashGuardrails(mockPi as any, () => mockRuntime as any);
-    }).not.toThrow();
   });
 });

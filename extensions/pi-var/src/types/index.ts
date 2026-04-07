@@ -21,10 +21,6 @@ export interface Variation {
   lastAccessed: string;
   /** Git branch name (for worktrees) */
   branchName?: string;
-  /** Assigned port for isolated mode */
-  assignedPort?: number;
-  /** Portless process ID (for cleanup) */
-  portlessPid?: number;
 }
 
 export interface VarState {
@@ -43,8 +39,6 @@ export interface VarConfig {
   symlink: string[];
   /** Commands to run after variation creation */
   postCreate: string[];
-  /** Enable portless isolation */
-  usePortless: boolean;
 }
 
 export interface VarRuntime {
@@ -63,8 +57,6 @@ export interface CreateVariationOptions {
   type?: VariationType;
   /** Create git branch */
   createBranch?: boolean;
-  /** Use portless for port isolation */
-  isolated?: boolean;
 }
 
 export interface MergeOptions {

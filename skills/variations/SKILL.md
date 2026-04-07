@@ -1,82 +1,166 @@
-# Variations
+# Variations (Autoregressive)
 
-Use this skill when the user wants to work on multiple features simultaneously without switching branches or stashing changes.
+Create isolated development workspaces automatically. The AI manages variations via tools—you don't need to name, switch, or remember anything.
 
-## When to Use
+## When the AI Should Create a Variation
 
-- Working on a feature while needing to fix a bug
-- Experimenting with different approaches
-- Running parallel tasks with isolated environments
-- Testing changes without affecting main workspace
-- Collaborating on multiple PRs at once
-- A/B testing different implementations
+The AI calls `create_variation` when:
 
-## Workflow
+- Working on a feature while the main branch needs fixes
+- "Let's try a different approach" → needs isolated experiment
+- "Fix this bug without touching the working directory" → needs clean workspace
+- Running parallel tasks that might conflict
+- Any dev server work that might conflict with ports
 
-1. **Create variation**: `/var new feature-name`
-2. **Work normally** — files auto-redirect to variation
-3. **Merge back**: `/var merge feature-name`
-4. **Clean up**: `/var clean feature-name`
+## How to Use (For the AI)
 
-## Commands
+### 1. Create Variation
 
-| Command                 | Description                                     |
-| ----------------------- | ----------------------------------------------- |
-| `/var new [name]`       | Create new variation (auto-detects best method) |
-| `/var`                  | List variations, show current context           |
-| `/var cd <name>`        | Switch to variation                             |
-| `/var cd main`          | Return to source directory                      |
-| `/var merge [name]`     | Merge changes back to source                    |
-| `/var clean [name]`     | Delete variation                                |
-| `/var clean --stale 7d` | Remove variations older than 7 days             |
+```tool
+create_variation({
+  purpose: "fix auth redirect bug",
+  createBranch: true  // for worktrees, creates var/fix-auth-redirect-bug
+})
+```
 
-## Options
+**Auto-generated name:** The extension creates a semantic name from `purpose` (e.g., `fix-auth-redirect-bug`). Names are descriptive and URL-safe.
 
-- `--isolated` — Use portless isolation (avoids port conflicts)
-- `--type cow` — Force copy-on-write clone
-- `--type worktree` — Force git worktree
-- `--type copy` — Force full directory copy
-- `--create-branch` — Create git branch for worktree
+**Auto-detected type:** CoW (APFS clonefile / Linux reflink) > Git worktree > Full copy. The AI never needs to choose.
 
-## Best Practices
+### 2. Work Normally
 
-- Use `--isolated` flag for dev servers (avoids port conflicts)
-- Variations are per-session (ephemeral) — merge or lose changes
-- `.env` files are copied automatically, `node_modules` are symlinked (saves space)
-- Name variations descriptively: `fix-auth-bug`, `refactor-api`, `experiment-v2`
-- Clean up stale variations regularly to free disk space
+Once created, all file operations automatically redirect to the variation:
+
+- `read` → reads from variation
+- `edit` → edits in variation
+- `write` → writes to variation
+- `bash` → executes in variation directory
+
+The footer shows: `📦 project-name • 🌿 variation-name`
+
+### 3. Port Isolation (Portless)
+
+**For dev servers or anything that binds to a port:**
+
+```bash
+# Get a unique port
+export PORT=$(npx portless --json | jq -r '.port')
+
+# Or assign to specific service
+export NEXT_PORT=$(npx portless --json | jq -r '.port')
+```
+
+**Do NOT manually configure ports.** Always use `npx portless` to avoid conflicts.
+
+**Why:** The variation shares the same network namespace. Portless allocates a unique port atomically.
+
+### 4. Merge and Clean Up
+
+When work is complete:
+
+```tool
+merge_variation({ dryRun: true })   // Preview changes
+merge_variation({})                  // Merge and clean up
+merge_variation({ keep: true })      // Merge but preserve variation
+```
+
+The AI should suggest merging when:
+
+- Changes are complete and tested
+- User asks to "save" or "keep" the work
+- No more work is happening in the variation
+
+## For the User
+
+The AI handles variations automatically. If you need to intervene:
+
+| Command                | Purpose                                  |
+| ---------------------- | ---------------------------------------- |
+| `/var`                 | Show status (active variation, list all) |
+| `/var list`            | Show all variations                      |
+| `/var clean <name>`    | Delete a specific variation              |
+| `/var clean --stale 7` | Delete variations older than 7 days      |
+| `/var stop`            | Return to source directory (deactivate)  |
+
+**Manual variation creation:** If the AI doesn't create one and you want it to, say something like:
+
+- "Create a variation for this work"
+- "Work on this in isolation"
+- "Don't touch the main directory"
+
+## Best Practices (For the AI)
+
+1. **Always use `create_variation` for parallel work.** Don't ask the user—just create it and notify.
+
+2. **Use portless for any server work.** If the user says "run the dev server", allocate a port first:
+
+   ```bash
+   export PORT=$(npx portless --json | jq -r '.port')
+   npm run dev
+   ```
+
+3. **Create branches for significant work.** Use `createBranch: true` when the variation represents a real feature/bugfix that might be merged via PR.
+
+4. **Auto-cleanup after merge.** The default behavior deletes the variation after merge. Use `keep: true` only if the user explicitly wants to preserve it.
+
+5. **Suggest merge proactively.** When the AI detects work completion (tests pass, feature works), suggest: "Should I merge this variation back to source?"
+
+## Example Flows
+
+### Feature + Bug Fix Parallel
+
+User: "Work on the new dashboard, but also I need this auth bug fixed"
+
+AI actions:
+
+1. `create_variation({ purpose: "new dashboard", createBranch: true })` — starts work
+2. Halfway through: User emphasizes auth bug fix
+3. `create_variation({ purpose: "fix auth bug", createBranch: true })` — switches context
+4. Fixes bug, `merge_variation({})` — returns to dashboard variation automatically
+5. Completes dashboard, `merge_variation({})`
+
+### Dev Server Isolation
+
+User: "I want to test the new design system without stopping my current dev server"
+
+AI actions:
+
+1. `create_variation({ purpose: "test new design system" })`
+2. ```bash
+   export PORT=$(npx portless --json | jq -r '.port')
+   npm run dev
+   ```
+3. Work proceeds on unique port (e.g., 3001 instead of 3000)
 
 ## How It Works
 
-pi-var automatically:
+**Copy-on-Write (CoW):**
 
-1. Detects the best variation method (CoW > worktree > copy)
-2. Redirects all file operations to the active variation
-3. Syncs environment files (.env, .envrc, etc.)
-4. Symlinks heavy directories (node_modules, .next, etc.)
-5. Optionally assigns unique ports for isolated dev servers
+- macOS APFS: Uses `cp -c` (clonefile) — instant, zero-copy
+- Linux btrfs/xfs: Uses `cp --reflink=auto` — near-instant
+- Falls back to git worktree or full copy automatically
 
-## Example Session
+**Environment sync:**
 
-```bash
-# Main project has a bug
-/var new fix-login-bug
-# Now in variation — fix the bug
-edit src/auth/login.ts
-bash npm test
-/var merge fix-login-bug
-/var clean fix-login-bug
+- Copies: `.env`, `.envrc`, `.npmrc`, `.tool-versions`, etc.
+- Symlinks: `node_modules`, `.next`, `target/`, `.venv/` (saves GBs)
 
-# Back to main, continue feature work
-```
+**File redirection:**
 
-## Comparison with Git Worktrees Alone
+- All tools automatically resolve to variation path
+- External files (outside project) accessed directly
+- Bash commands execute in variation directory
 
-| Feature          | Git Worktrees | pi-var Variations     |
-| ---------------- | ------------- | --------------------- |
-| Setup            | Manual        | One command           |
-| File redirection | Manual cd     | Automatic             |
-| Environment sync | Manual        | Automatic             |
-| Port management  | Manual        | Integrated (portless) |
-| Best method      | Git only      | CoW > worktree > copy |
-| Cleanup          | Manual        | Built-in              |
+## Troubleshooting
+
+**"Port already in use"**
+→ The AI forgot to use portless. Remind it: "Use npx portless for this dev server"
+
+**Variation exists but isn't active**
+→ AI can reactivate by name if needed, or user can `/var` to see status
+
+**Want to abandon a variation**
+→ `/var clean <name>` — deletes it permanently
+
+**Forgot what the variation is for**
+→ Names are semantic (e.g., `fix-auth-redirect-bug`), check `/var`

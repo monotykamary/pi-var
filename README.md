@@ -1,15 +1,22 @@
 # pi-var
 
-Copy-on-write variations for pi — work on multiple features simultaneously with isolated workspaces.
+AI-driven copy-on-write variations for pi. Work on multiple features simultaneously with isolated workspaces—automatically.
 
-## Features
+## Philosophy: The AI Does It
 
-- 🚀 **CoW First**: Uses copy-on-write (APFS clonefile/Linux reflink) when available
-- 🌿 **Git Worktree Fallback**: Native git integration for non-CoW filesystems
-- 🔄 **Transparent File Redirection**: read/edit/write automatically resolve to variation
-- 📦 **Environment Sync**: Copies .env files, symlinks node_modules (saves GBs)
-- 🔌 **Portless Integration**: Optional isolated mode with unique ports via `npx portless`
-- 🧹 **Auto-Cleanup**: Remove stale variations after 7 days
+Traditional variation management requires you to:
+
+- Name the variation
+- Remember to switch contexts
+- Manually merge and clean up
+
+**pi-var** removes all of that. The AI detects when isolated work is needed and handles everything:
+
+- Creates variations with semantic names
+- Redirects all file operations automatically
+- Suggests merge when work is complete
+
+You just say what you want. The AI manages the workspace.
 
 ## Installation
 
@@ -23,177 +30,152 @@ Or project-local:
 pi install -l npm:pi-var
 ```
 
-## Quick Start
+## Usage
 
-```bash
-# Create a variation for a new feature
-/var new feature-auth
+### Natural Language
 
-# Work normally — files automatically redirect to variation
-edit src/auth.ts
-bash npm test
+Just describe what you need:
 
-# Merge changes back to source
-/var merge feature-auth
+> "Work on the new dashboard feature while I fix this bug in main"
 
-# Clean up
-/var clean feature-auth
+The AI automatically:
+
+1. Creates a variation for the dashboard work
+2. Redirects all operations to that variation
+3. When you mention the bug fix, creates another variation
+4. Switches between them transparently
+5. Merges completed work back
+
+### Dev Server Isolation
+
+> "Run this experiment on a different port so my main dev server keeps running"
+
+The AI:
+
+1. Creates a variation
+2. Allocates a unique port via `npx portless`
+3. Runs the dev server
+4. All without touching your main server
+
+## For Users: Manual Commands
+
+If you need to intervene or check status:
+
+| Command                | Purpose                             |
+| ---------------------- | ----------------------------------- |
+| `/var`                 | Show status and active variation    |
+| `/var list`            | List all variations                 |
+| `/var clean <name>`    | Delete a variation                  |
+| `/var clean --stale 7` | Delete variations older than 7 days |
+| `/var stop`            | Return to source directory          |
+
+## For the AI: Tools Reference
+
+### create_variation
+
+Create an isolated workspace automatically.
+
+```typescript
+{
+  purpose: string;           // "fix auth redirect bug"
+  type?: 'cow' | 'worktree' | 'copy';  // Auto-detected if omitted
+  createBranch?: boolean;    // Create git branch for worktrees
+}
 ```
 
-## Commands
+**Auto-generated name:** Creates semantic names from `purpose` (e.g., `fix-auth-redirect-bug`).
 
-| Command                     | Description                                      |
-| --------------------------- | ------------------------------------------------ |
-| `/var new [name]`           | Create new variation (auto-detects best method)  |
-| `/var`                      | List variations, show current context            |
-| `/var cd <name>`            | Switch to variation (activates file redirection) |
-| `/var cd main`              | Return to source directory                       |
-| `/var merge [name]`         | Merge changes back to source                     |
-| `/var clean [name]`         | Delete variation                                 |
-| `/var clean --stale <days>` | Remove variations older than N days              |
+**Auto-detected method:**
 
-## Options
+1. CoW (APFS clonefile / Linux reflink) — fastest, instant
+2. Git worktree — for git projects on non-CoW filesystems
+3. Full copy — universal fallback
 
-### /var new
+**Port isolation:** For dev servers, use `npx portless` via bash:
 
-- `--isolated` — Use portless for unique port assignment
-- `--type cow` — Force copy-on-write clone
-- `--type worktree` — Force git worktree
-- `--type copy` — Force full directory copy
+```bash
+export PORT=$(npx portless --json | jq -r '.port')
+npm run dev
+```
 
-### /var merge
+### merge_variation
 
-- `--dry-run` — Preview changes without applying
-- `--keep` — Keep variation after merge (don't delete)
+Merge current variation back to source.
+
+```typescript
+{
+  dryRun?: boolean;   // Preview changes
+  keep?: boolean;     // Preserve variation after merge
+}
+```
+
+**Auto-cleanup:** By default, the variation is deleted after merge.
 
 ## How It Works
 
-### Auto-Detection Strategy
+### Copy-on-Write (CoW)
 
-When creating a variation, pi-var automatically selects the best method:
+When available, pi-var uses filesystem-level copy-on-write:
 
-1. **CoW (Copy-on-Write)** — Fastest, most space-efficient
-   - macOS APFS: Uses `cp -c` (clonefile)
-   - Linux btrfs/xfs: Uses `cp --reflink=auto`
-
-2. **Git Worktree** — Native git integration
-   - Creates linked worktree with separate branch
-   - Ideal for git-based projects on non-CoW filesystems
-
-3. **Full Copy** — Universal fallback
-   - Complete directory copy
-   - Works everywhere, uses more disk space
-
-### File Redirection
-
-When you activate a variation (`/var cd <name>`):
-
-- All `read` operations resolve to the variation directory
-- All `edit` operations modify files in the variation
-- All `write` operations create files in the variation
-- User `!bash` commands execute in the variation directory
-- External files (outside project) are accessed directly
+- **macOS APFS:** `cp -c` uses clonefile — instant, shares data blocks
+- **Linux (btrfs/xfs):** `cp --reflink=auto` — near-instant, CoW on write
+- **Fallback:** Git worktree → Full copy
 
 ### Environment Synchronization
 
-When creating a variation, pi-var automatically:
+**Copied files:** `.env`, `.envrc`, `.npmrc`, `.tool-versions`, `.node-version`
 
-**Copies these files:**
+**Symlinked directories:** `node_modules`, `.next`, `.nuxt`, `target/`, `.venv/`
 
-- `.env`, `.env.*`, `.envrc`
-- `.npmrc`, `.yarnrc`, `.yarnrc.yml`
-- `.tool-versions`, `.node-version`, `.python-version`
-- `docker-compose.override.yml`
+This saves gigabytes of disk space while ensuring each variation has isolated environment configuration.
 
-**Symlinks these directories** (saves disk space):
+### Transparent Redirection
 
-- `node_modules`, `.next`, `.nuxt`, `.angular`, `.turbo`
-- `target/` (Rust), `.venv/` (Python), `vendor/` (Go)
+When a variation is active:
 
-## Portless Integration
+- `read` → reads from variation directory
+- `edit` → modifies files in variation
+- `write` → creates files in variation
+- `bash` → executes in variation directory
+- External paths (outside project) → accessed directly
 
-For projects with dev servers, use the `--isolated` flag:
-
-```bash
-/var new feature-api --isolated
-```
-
-This runs `npx portless` to:
-
-- Allocate a unique port (e.g., 3001, 3002)
-- Set `PORT` environment variable
-- Avoid conflicts with main dev server
-
-## Configuration
-
-Create `.varconfig.yaml` in your project root for custom settings:
-
-```yaml
-# Files to copy from source to variation
-copy:
-  - .env
-  - .env.local
-  - .npmrc
-
-# Directories to symlink (saves space)
-symlink:
-  - node_modules
-  - .next
-  - .turbo
-
-# Commands to run after variation creation
-postCreate:
-  - npm install
-  - npm run db:migrate
-```
+The footer shows: `📦 project-name • 🌿 variation-name`
 
 ## Comparison
 
 ### vs Git Worktrees Alone
 
-| Feature          | Git Worktrees               | pi-var Variations     |
-| ---------------- | --------------------------- | --------------------- |
-| Setup            | Manual                      | One command           |
-| File redirection | Manual cd                   | Automatic             |
-| Environment sync | Manual (.env, node_modules) | Automatic             |
-| Port management  | Manual                      | Integrated (portless) |
-| Method selection | Git only                    | CoW > worktree > copy |
-| Cleanup          | Manual git commands         | Built-in `/var clean` |
+| Feature          | Git Worktrees       | pi-var                     |
+| ---------------- | ------------------- | -------------------------- |
+| Setup            | Manual branching    | Automatic                  |
+| File redirection | Manual `cd`         | Transparent                |
+| Environment sync | Manual copy/symlink | Automatic                  |
+| Port conflicts   | Manual management   | AI handles via portless    |
+| Best method      | Git only            | CoW > worktree > copy      |
+| Cleanup          | Manual git commands | AI-managed or `/var clean` |
 
 ### vs Docker/Dev Containers
 
-- **pi-var**: Native filesystem performance, instant startup, no image builds
-- **Docker**: True isolation, different OS environments, slower startup
+- **pi-var:** Native filesystem performance, instant startup, same environment
+- **Docker:** True OS isolation, image builds, slower startup
 
-Use pi-var for same-environment parallel work, Docker for cross-environment work.
+Use pi-var for parallel development work. Use Docker for different OS/toolchain environments.
 
-## Best Practices
+## Configuration
 
-1. **Name descriptively**: `fix-auth-bug`, `refactor-api`, `experiment-v2`
-2. **Use `--isolated`** for any variation running dev servers
-3. **Merge promptly** — variations are per-session and ephemeral
-4. **Clean stale variations**: Run `/var clean --stale 7` weekly
-5. **Don't nest variations** — create variations from source only
+Create `.varconfig.yaml` in project root for custom sync rules:
 
-## Troubleshooting
+```yaml
+# Files to copy
+ copy:
+  - .env.local
+  - secrets.json
 
-### "Portless not available"
-
-Install portless globally or ensure npx can fetch it:
-
-```bash
-npm install -g portless
-# or
-npx portless --version
+# Directories to symlink
+symlink:
+  - node_modules
+  - .turbo
 ```
-
-### "CoW not supported"
-
-Your filesystem doesn't support copy-on-write. pi-var will automatically fall back to git worktrees (if git repo) or full copy.
-
-### Files not redirecting
-
-Check footer status — it should show `📦 project-name • 🌿 variation-name`. If not, run `/var cd <name>` to activate.
 
 ## Development
 
@@ -204,11 +186,8 @@ npm install
 # Run tests
 npm test
 
-# Run type check
+# Type check
 npm run typecheck
-
-# Run linter
-npm run lint:dead
 ```
 
 ## License
