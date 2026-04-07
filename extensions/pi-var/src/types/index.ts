@@ -2,6 +2,40 @@
  * Core type definitions for pi-var extension
  */
 
+/**
+ * CoW detection result with EDR awareness
+ */
+export interface CoWDetectionResult {
+  /** Whether CoW is supported on this platform/filesystem */
+  supported: boolean;
+  /** CoW method if supported */
+  method?: 'clonefile' | 'reflink';
+  /** EDR detection results */
+  edr?: {
+    /** Whether any EDR was detected */
+    detected: boolean;
+    /** List of detected EDR products */
+    products: string[];
+    /** Whether any detected EDR is known to slow CoW operations */
+    hasSlowCoWEDR: boolean;
+  };
+  /** Performance test results */
+  performance?: {
+    /** Whether CoW performed fast enough to be usable */
+    fast: boolean;
+    /** Average time in ms for CoW operations */
+    durationMs: number;
+    /** Number of timing samples collected */
+    samples?: number;
+    /** Maximum duration observed (helps detect spikes) */
+    maxDurationMs?: number;
+    /** Confidence level in the timing measurement */
+    confidence?: 'high' | 'medium' | 'low';
+  };
+  /** Recommended variation type based on CoW support and EDR presence */
+  recommendedType: 'cow' | 'worktree' | 'copy';
+}
+
 export type VariationType = 'cow' | 'worktree' | 'copy';
 
 export interface Variation {
