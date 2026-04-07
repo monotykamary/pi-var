@@ -1,3 +1,8 @@
+---
+name: variations
+description: Create isolated development workspaces (variations) automatically with CoW, Git worktrees, or full copies. AI-managed isolation for parallel work, experiments, and dev server port isolation.
+---
+
 # Variations (Autoregressive)
 
 Create isolated development workspaces automatically. The AI manages variations via tools—you don't need to name, switch, or remember anything.
