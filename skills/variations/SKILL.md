@@ -41,8 +41,6 @@ Once created, all file operations automatically redirect to the variation:
 - `write` → writes to variation
 - `bash` → executes in variation directory
 
-The footer shows: `📦 project-name • 🌿 variation-name`
-
 ### 3. Port Isolation (Portless)
 
 **For dev servers or anything that binds to a port:**
@@ -59,15 +57,16 @@ export NEXT_PORT=$(npx portless --json | jq -r '.port')
 
 **Why:** The variation shares the same network namespace. Portless allocates a unique port atomically.
 
-### 4. Merge and Clean Up
+### 4. Merge
 
 When work is complete:
 
 ```tool
 merge_variation({ dryRun: true })   // Preview changes
-merge_variation({})                  // Merge and clean up
-merge_variation({ keep: true })      // Merge but preserve variation
+merge_variation({})                  // Merge to source
 ```
+
+**Variations are never deleted automatically.** They persist after merge for safety and recovery. Use `/var clean` to remove old variations.
 
 The AI should suggest merging when:
 
@@ -106,7 +105,7 @@ The AI handles variations automatically. If you need to intervene:
 
 3. **Create branches for significant work.** Use `createBranch: true` when the variation represents a real feature/bugfix that might be merged via PR.
 
-4. **Auto-cleanup after merge.** The default behavior deletes the variation after merge. Use `keep: true` only if the user explicitly wants to preserve it.
+4. **Variations persist after merge.** They are never automatically deleted. This protects against data loss if a merge fails. Clean up old variations with `/var clean --stale 7`.
 
 5. **Suggest merge proactively.** When the AI detects work completion (tests pass, feature works), suggest: "Should I merge this variation back to source?"
 

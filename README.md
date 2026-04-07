@@ -105,11 +105,10 @@ Merge current variation back to source.
 ```typescript
 {
   dryRun?: boolean;   // Preview changes
-  keep?: boolean;     // Preserve variation after merge
 }
 ```
 
-**Auto-cleanup:** By default, the variation is deleted after merge.
+**Variations persist after merge.** They are never automatically deleted to protect against data loss. Use `/var clean` to remove old variations.
 
 ## How It Works
 
@@ -139,7 +138,7 @@ When a variation is active:
 - `bash` → executes in variation directory
 - External paths (outside project) → accessed directly
 
-The footer shows: `📦 project-name • 🌿 variation-name`
+The footer shows: `🌿 variation-name`
 
 ## Comparison
 

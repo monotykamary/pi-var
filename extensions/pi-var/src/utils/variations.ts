@@ -385,26 +385,24 @@ export async function mergeVariation(
   variation: Variation,
   sourcePath: string,
   options: MergeOptions = {}
-): Promise<void> {
+): Promise<string> {
   const strategy = options.strategy || 'auto';
   const effectiveStrategy =
     strategy === 'auto' ? await detectMergeStrategy(variation, sourcePath) : strategy;
 
+  let result = '';
   switch (effectiveStrategy) {
     case 'git':
-      await mergeWithGit(variation, sourcePath, options);
+      result = await mergeWithGit(variation, sourcePath, options);
       break;
     case 'rsync':
-      await mergeWithRsync(variation, sourcePath, options);
+      result = await mergeWithRsync(variation, sourcePath, options);
       break;
     default:
-      await mergeWithCopy(variation, sourcePath, options);
+      result = await mergeWithCopy(variation, sourcePath, options);
   }
 
-  // Clean up variation if not keeping
-  if (!options.keep) {
-    await removeVariation(variation);
-  }
+  return result;
 }
 
 /**
@@ -438,7 +436,7 @@ async function mergeWithGit(
   variation: Variation,
   sourcePath: string,
   options: MergeOptions
-): Promise<void> {
+): Promise<string> {
   if (!variation.branchName) {
     throw new Error('Cannot merge: variation has no associated branch');
   }
@@ -456,13 +454,13 @@ async function mergeWithGit(
     const { stdout } = await execAsync(
       `git -C "${sourcePath}" diff "${targetBranch}...${variation.branchName}" --stat`
     );
-    console.log('Files that would be merged:\n', stdout);
-    return;
+    return `Files that would be merged:\n${stdout}`;
   }
 
   // Merge the branch
   try {
     await execAsync(`git -C "${sourcePath}" merge "${variation.branchName}" --no-edit`);
+    return '';
   } catch (err) {
     // Merge conflict or failure
     throw new Error(
@@ -478,7 +476,7 @@ async function mergeWithRsync(
   variation: Variation,
   sourcePath: string,
   options: MergeOptions
-): Promise<void> {
+): Promise<string> {
   const rsyncFlags = options.dryRun ? '-avn' : '-av';
 
   // Build exclude patterns for rsync
@@ -497,11 +495,11 @@ async function mergeWithRsync(
 
   if (options.dryRun) {
     const { stdout } = await execAsync(cmd);
-    console.log('Files that would be merged:\n', stdout);
-    return;
+    return `Files that would be merged:\n${stdout}`;
   }
 
   await execAsync(cmd);
+  return '';
 }
 
 /**
@@ -511,16 +509,13 @@ async function mergeWithCopy(
   variation: Variation,
   sourcePath: string,
   options: MergeOptions
-): Promise<void> {
+): Promise<string> {
   // Get list of files to merge
   const files = await getFilesToMerge(variation.path, sourcePath);
 
   if (options.dryRun) {
-    console.log('Files that would be merged:');
-    for (const file of files) {
-      console.log(`  ${file}`);
-    }
-    return;
+    const fileList = files.map((f) => `  ${f}`).join('\n');
+    return `Files that would be merged:\n${fileList}`;
   }
 
   // Copy each file
@@ -534,6 +529,7 @@ async function mergeWithCopy(
     // Copy file
     await fs.copyFile(srcFile, destFile);
   }
+  return '';
 }
 
 /**

@@ -62,8 +62,6 @@ export interface CreateVariationOptions {
 export interface MergeOptions {
   /** Dry run - show what would change */
   dryRun?: boolean;
-  /** Keep variation after merge */
-  keep?: boolean;
   /** Merge strategy: 'auto' | 'git' | 'rsync' | 'copy' */
   strategy?: 'auto' | 'git' | 'rsync' | 'copy';
 }

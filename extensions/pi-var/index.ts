@@ -5,7 +5,6 @@
  * - create_variation tool — AI creates variations automatically
  * - /var command — argument-free status and manual override
  * - File redirection — transparent read/edit/write to active variation
- * - Status indicator — footer shows current variation
  * - Environment sync — copy .env, symlink node_modules
  *
  * Port isolation is handled by the AI via bash (portless), not extension code.
@@ -20,7 +19,6 @@ import { registerRedirectedFileTools } from './src/tools/index';
 import { setupVariationEnvironment, detectVariationContext } from './src/utils/environment';
 import { createVariation, mergeVariation } from './src/utils/variations';
 import { Type } from '@sinclair/typebox';
-import path from 'path';
 
 // Default configuration
 const DEFAULT_CONFIG = {
@@ -61,23 +59,6 @@ export default function piVarExtension(pi: ExtensionAPI) {
   // Register redirected file tools (only when in variation)
   registerRedirectedFileTools(pi, getRuntime);
 
-  // Status line updater
-  const updateStatus = (ctx: ExtensionContext) => {
-    const runtime = getRuntime(ctx);
-    const active = runtime.state.activeVariationId;
-
-    if (active) {
-      const variation = runtime.state.variations.find((v) => v.id === active);
-      if (variation) {
-        const project = variation.sourcePath.split('/').pop() || 'project';
-        ctx.ui.setStatus('pi-var', `📦 ${project} • 🌿 ${variation.name}`);
-        return;
-      }
-    }
-
-    ctx.ui.setStatus('pi-var', '');
-  };
-
   // Session lifecycle
   pi.on('session_start', async (event, ctx) => {
     const sessionKey = getSessionKey(ctx);
@@ -101,8 +82,6 @@ export default function piVarExtension(pi: ExtensionAPI) {
         runtimeStore.persistState(sessionKey, pi);
       }
     }
-
-    updateStatus(ctx);
   });
 
   // System prompt extension when in variation
@@ -205,10 +184,6 @@ When finished, use the merge_variation tool to merge changes back to the source.
         // Persist state to session
         runtimeStore.persistState(getSessionKey(ctx), pi);
 
-        // Update status
-        const project = path.basename(variation.sourcePath);
-        ctx.ui.setStatus('pi-var', `📦 ${project} • 🌿 ${variation.name}`);
-
         const typeLabel =
           variation.type === 'cow'
             ? 'CoW clone'
@@ -239,18 +214,12 @@ When finished, use the merge_variation tool to merge changes back to the source.
     description:
       'Merge changes from the current variation back to the source directory. ' +
       'Auto-selects merge strategy: git (for worktrees) > rsync > copy. ' +
-      'By default, removes the variation after merge (use keep: true to preserve).',
+      'Variations are never deleted automatically. Use /var clean to remove old variations.',
     parameters: Type.Object({
       dryRun: Type.Optional(
         Type.Boolean({
           default: false,
           description: 'Preview what would be merged without applying changes.',
-        })
-      ),
-      keep: Type.Optional(
-        Type.Boolean({
-          default: false,
-          description: 'Keep the variation directory after merge (do not delete).',
         })
       ),
     }),
@@ -273,26 +242,16 @@ When finished, use the merge_variation tool to merge changes back to the source.
       }
 
       try {
-        await mergeVariation(variation, ctx.cwd, {
+        const dryRunOutput = await mergeVariation(variation, ctx.cwd, {
           dryRun: params.dryRun,
-          keep: params.keep,
         });
-
-        // Update state
-        if (!params.keep && !params.dryRun) {
-          runtime.state.variations = runtime.state.variations.filter((v) => v.id !== activeId);
-          runtime.state.activeVariationId = null;
-          runtime.redirectionActive = false;
-          ctx.ui.setStatus('pi-var', '');
-        }
 
         // Persist state to session
         runtimeStore.persistState(getSessionKey(ctx), pi);
 
         const action = params.dryRun ? 'Would merge' : 'Merged';
-        const cleanup = !params.keep && !params.dryRun ? ' Variation cleaned up.' : '';
-
-        return text(`${action} variation "${variation.name}" to source.${cleanup}`);
+        const output = dryRunOutput ? `\n\n${dryRunOutput}` : '';
+        return text(`${action} variation "${variation.name}" to source.${output}`);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         return text(`Failed to merge variation: ${message}`);

@@ -268,7 +268,7 @@ describe('mergeVariation', () => {
     // New file should not exist in source yet
     await expect(fs.access(path.join(sourceDir, 'new-file.txt'))).rejects.toThrow();
 
-    await mergeVariation(variation, sourceDir, { keep: true });
+    await mergeVariation(variation, sourceDir);
 
     // New file should now exist
     const content = await fs.readFile(path.join(sourceDir, 'new-file.txt'), 'utf-8');
@@ -280,25 +280,16 @@ describe('mergeVariation', () => {
     expect(original).toBe('// original');
 
     // Force copy strategy to avoid rsync issues in test environment
-    await mergeVariation(variation, sourceDir, { keep: true, strategy: 'copy' });
+    await mergeVariation(variation, sourceDir, { strategy: 'copy' });
 
     const merged = await fs.readFile(path.join(sourceDir, 'src', 'app'), 'utf-8');
     expect(merged).toBe('// modified');
   });
 
-  it('should remove variation after merge when keep is false', async () => {
+  it('should keep variation after merge', async () => {
     const variationPath = variation.path;
 
     await mergeVariation(variation, sourceDir);
-
-    // Variation should be removed
-    await expect(fs.access(variationPath)).rejects.toThrow();
-  });
-
-  it('should keep variation after merge when keep is true', async () => {
-    const variationPath = variation.path;
-
-    await mergeVariation(variation, sourceDir, { keep: true });
 
     // Variation should still exist
     const stats = await fs.stat(variationPath);
@@ -308,10 +299,7 @@ describe('mergeVariation', () => {
   it('should support dry run mode', async () => {
     const variationPath = variation.path;
 
-    await mergeVariation(variation, sourceDir, {
-      dryRun: true,
-      keep: true,
-    });
+    await mergeVariation(variation, sourceDir, { dryRun: true });
 
     // Variation should still exist
     const stats = await fs.stat(variationPath);
