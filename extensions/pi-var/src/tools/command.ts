@@ -8,19 +8,28 @@
 
 import type { ExtensionAPI, ExtensionContext } from '@mariozechner/pi-coding-agent';
 import type { VarRuntime } from '../types/index';
+import type { RuntimeStore } from '../state/store';
 import { removeVariation } from '../utils/variations';
 
 /** Dependencies for command handlers */
 interface CommandDeps {
   pi: ExtensionAPI;
   getRuntime: (ctx: ExtensionContext) => VarRuntime;
+  runtimeStore: RuntimeStore;
+}
+
+/**
+ * Extract session key from extension context
+ */
+function getSessionKey(ctx: ExtensionContext): string {
+  return ctx.sessionManager.getSessionId();
 }
 
 /**
  * Register the /var command (argument-free, status/overview)
  */
 export function registerVarCommand(pi: ExtensionAPI, deps: CommandDeps): void {
-  const { getRuntime } = deps;
+  const { getRuntime, runtimeStore } = deps;
 
   pi.registerCommand('var', {
     description: 'Show variation status and provide manual override commands',
@@ -119,6 +128,9 @@ export function registerVarCommand(pi: ExtensionAPI, deps: CommandDeps): void {
                 );
               }
 
+              // Persist state after cleaning
+              runtimeStore.persistState(getSessionKey(ctx), pi);
+
               ctx.ui.notify(`Cleaned ${staleVariations.length} stale variation(s)`, 'info');
               return;
             }
@@ -158,6 +170,9 @@ export function registerVarCommand(pi: ExtensionAPI, deps: CommandDeps): void {
               ctx.ui.setStatus('pi-var', '');
             }
 
+            // Persist state after cleaning
+            runtimeStore.persistState(getSessionKey(ctx), pi);
+
             ctx.ui.notify(`Deleted variation "${name}"`, 'info');
             break;
           }
@@ -172,6 +187,11 @@ export function registerVarCommand(pi: ExtensionAPI, deps: CommandDeps): void {
               runtime.state.activeVariationId = null;
               runtime.redirectionActive = false;
               ctx.ui.setStatus('pi-var', '');
+
+              // Persist the "stop" state to session
+              // This makes /var stop meaningful — it clears the active variation in the session
+              runtimeStore.persistState(getSessionKey(ctx), pi);
+
               ctx.ui.notify(
                 variation
                   ? `Left variation "${variation.name}" — now in source`

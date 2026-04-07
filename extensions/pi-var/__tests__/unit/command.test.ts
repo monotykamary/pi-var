@@ -6,16 +6,29 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { registerVarCommand } from '../../src/tools/command';
 import type { ExtensionAPI, ExtensionContext } from '@mariozechner/pi-coding-agent';
 import type { VarRuntime, Variation } from '../../src/types/index';
+import type { RuntimeStore } from '../../src/state/store';
 
 // Mock the dependencies
+function createMockRuntimeStore(): RuntimeStore {
+  return {
+    ensure: vi.fn(),
+    get: vi.fn(),
+    delete: vi.fn(),
+    persistState: vi.fn(),
+    restoreState: vi.fn(),
+  };
+}
+
 function createMockDeps(runtime: VarRuntime = createMockRuntime()) {
   return {
     pi: {
       registerCommand: vi.fn(),
       on: vi.fn(),
       exec: vi.fn().mockResolvedValue({ code: 0, stdout: '', stderr: '' }),
+      appendEntry: vi.fn(),
     } as unknown as ExtensionAPI,
     getRuntime: () => runtime,
+    runtimeStore: createMockRuntimeStore(),
   };
 }
 
@@ -44,8 +57,12 @@ function createMockCtx(overrides: Partial<ExtensionContext> = {}): ExtensionCont
       setStatus: vi.fn(),
     },
     hasUI: true,
+    sessionManager: {
+      getSessionId: vi.fn().mockReturnValue('test-session'),
+      getEntries: vi.fn().mockReturnValue([]),
+    },
     ...overrides,
-  } as ExtensionContext;
+  } as unknown as ExtensionContext;
 }
 
 function createMockVariation(overrides: Partial<Variation> = {}): Variation {
@@ -181,6 +198,8 @@ describe('var command - stop (return to source)', () => {
     expect(runtime.state.activeVariationId).toBeNull();
     expect(runtime.redirectionActive).toBe(false);
     expect(ctx.ui.setStatus).toHaveBeenCalledWith('pi-var', '');
+    // Should persist state after stop
+    expect(deps.runtimeStore.persistState).toHaveBeenCalled();
   });
 
   it('should handle stop when already in source', async () => {

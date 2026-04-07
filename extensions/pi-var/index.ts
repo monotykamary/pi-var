@@ -56,7 +56,7 @@ export default function piVarExtension(pi: ExtensionAPI) {
   const getRuntime = (ctx: ExtensionContext): VarRuntime => runtimeStore.ensure(getSessionKey(ctx));
 
   // Register /var command (argument-free, status/overview)
-  registerVarCommand(pi, { getRuntime, pi });
+  registerVarCommand(pi, { getRuntime, pi, runtimeStore });
 
   // Register redirected file tools (only when in variation)
   registerRedirectedFileTools(pi, getRuntime);
@@ -80,6 +80,12 @@ export default function piVarExtension(pi: ExtensionAPI) {
 
   // Session lifecycle
   pi.on('session_start', async (event, ctx) => {
+    const sessionKey = getSessionKey(ctx);
+
+    // First ensure runtime exists, then restore from session
+    runtimeStore.ensure(sessionKey);
+    runtimeStore.restoreState(sessionKey, ctx.sessionManager);
+
     const runtime = getRuntime(ctx);
 
     // Detect if we're inside a variation directory
@@ -91,6 +97,8 @@ export default function piVarExtension(pi: ExtensionAPI) {
         runtime.state.activeVariationId = existing.id;
         runtime.redirectionActive = true;
         ctx.ui.notify(`Reconnected to variation: ${existing.name}`, 'info');
+        // Persist the reconnection
+        runtimeStore.persistState(sessionKey, pi);
       }
     }
 
@@ -194,6 +202,9 @@ When finished, use the merge_variation tool to merge changes back to the source.
         runtime.state.activeVariationId = variation.id;
         runtime.redirectionActive = true;
 
+        // Persist state to session
+        runtimeStore.persistState(getSessionKey(ctx), pi);
+
         // Update status
         const project = path.basename(variation.sourcePath);
         ctx.ui.setStatus('pi-var', `📦 ${project} • 🌿 ${variation.name}`);
@@ -275,6 +286,9 @@ When finished, use the merge_variation tool to merge changes back to the source.
           ctx.ui.setStatus('pi-var', '');
         }
 
+        // Persist state to session
+        runtimeStore.persistState(getSessionKey(ctx), pi);
+
         const action = params.dryRun ? 'Would merge' : 'Merged';
         const cleanup = !params.keep && !params.dryRun ? ' Variation cleaned up.' : '';
 
@@ -286,8 +300,8 @@ When finished, use the merge_variation tool to merge changes back to the source.
     },
   });
 
-  // Session end - variations persist on disk, no cleanup needed
-  pi.on('session_shutdown', async () => {
-    // Variations are persisted to disk and can be reconnected in new sessions
+  // Session end - persist final state
+  pi.on('session_shutdown', async (_event, ctx) => {
+    runtimeStore.persistState(getSessionKey(ctx), pi);
   });
 }

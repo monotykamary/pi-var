@@ -171,6 +171,7 @@ describe('pi-var smoke tests', () => {
       const mockPi = {
         registerCommand: () => {},
         on: () => {},
+        appendEntry: () => {},
       };
 
       const mockRuntime = {
@@ -179,11 +180,20 @@ describe('pi-var smoke tests', () => {
         lastPersisted: Date.now(),
       };
 
+      const mockRuntimeStore = {
+        ensure: () => mockRuntime,
+        get: () => mockRuntime,
+        delete: () => true,
+        persistState: () => {},
+        restoreState: () => {},
+      };
+
       // Should not throw
       expect(() => {
         registerVarCommand(mockPi as any, {
           getRuntime: () => mockRuntime,
           pi: mockPi as any,
+          runtimeStore: mockRuntimeStore as any,
         });
       }).not.toThrow();
     });
@@ -270,7 +280,17 @@ describe('pi-var smoke tests', () => {
         sessionManager: { getSessionId: () => 'test', getSessionFile: () => '' },
       };
 
-      registerVarCommand(mockPi as any, { getRuntime: () => mockRuntime, pi: mockPi as any });
+      registerVarCommand(mockPi as any, {
+        getRuntime: () => mockRuntime,
+        pi: mockPi as any,
+        runtimeStore: {
+          ensure: () => mockRuntime,
+          get: () => mockRuntime,
+          delete: () => true,
+          persistState: () => {},
+          restoreState: () => {},
+        } as any,
+      });
 
       // Attempt to create variation with --isolated (portless won't be available)
       // Should handle gracefully and not crash

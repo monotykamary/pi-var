@@ -2,21 +2,44 @@
  * Runtime store for per-session VarRuntime management
  */
 
-import type { VarRuntime, VarState } from '../types/index';
+import type { ExtensionAPI } from '@mariozechner/pi-coding-agent';
+import type { VarRuntime, VarState, Variation } from '../types/index';
+
+/** Custom entry type for session persistence */
+const VAR_STATE_ENTRY_TYPE = 'pi-var:state';
+
+/** Serialized state for persistence */
+interface PersistedVarState {
+  variations: Variation[];
+  activeVariationId: string | null;
+}
+
+/** Session entry interface for state restoration */
+export interface SessionEntry {
+  type: string;
+  customType?: string;
+  data?: unknown;
+}
+
+/** Session manager interface for accessing entries */
+export interface SessionManager {
+  getEntries?(): SessionEntry[];
+  getBranch?(): SessionEntry[];
+  getSessionId?(): string;
+}
 
 /**
  * Extension context interface for session key extraction
  */
 export interface ExtensionContext {
-  sessionManager: {
-    getSessionId(): string;
-  };
+  sessionManager: SessionManager;
 }
 
 /**
  * Runtime store interface for managing per-session VarRuntime instances
+ * @internal
  */
-interface RuntimeStore {
+export interface RuntimeStore {
   /**
    * Ensure a VarRuntime exists for the given session key,
    * creating one if it doesn't exist
@@ -33,6 +56,16 @@ interface RuntimeStore {
    * Delete a VarRuntime for the given session key
    */
   delete(sessionKey: string): boolean;
+
+  /**
+   * Persist current state to the session using pi.appendEntry()
+   */
+  persistState(sessionKey: string, pi: ExtensionAPI): void;
+
+  /**
+   * Restore state from session entries
+   */
+  restoreState(sessionKey: string, sessionManager: SessionManager): void;
 }
 
 /**
@@ -41,7 +74,7 @@ interface RuntimeStore {
  * @returns Session key string
  */
 export function getSessionKey(ctx: ExtensionContext): string {
-  return ctx.sessionManager.getSessionId();
+  return ctx.sessionManager.getSessionId?.() || 'default';
 }
 
 /**
@@ -71,8 +104,8 @@ function createRuntime(sessionId: string): VarRuntime {
 }
 
 /**
- * Create a Map-based runtime store for managing per-session VarRuntime instances
- * @returns RuntimeStore instance with ensure, get, and delete methods
+ * Create Map-based runtime store for managing per-session VarRuntime instances
+ * @returns RuntimeStore instance with ensure, get, delete, and persistState methods
  */
 export function createRuntimeStore(): RuntimeStore {
   const store = new Map<string, VarRuntime>();
@@ -93,6 +126,48 @@ export function createRuntimeStore(): RuntimeStore {
 
     delete(sessionKey: string): boolean {
       return store.delete(sessionKey);
+    },
+
+    persistState(sessionKey: string, pi: ExtensionAPI): void {
+      const runtime = store.get(sessionKey);
+      if (!runtime) return;
+
+      const persistedState: PersistedVarState = {
+        variations: runtime.state.variations,
+        activeVariationId: runtime.state.activeVariationId,
+      };
+
+      pi.appendEntry(VAR_STATE_ENTRY_TYPE, persistedState);
+      runtime.lastPersisted = Date.now();
+    },
+
+    restoreState(sessionKey: string, sessionManager: SessionManager): void {
+      const runtime = store.get(sessionKey);
+      if (!runtime) return;
+
+      // Use getBranch() for proper tree navigation support (returns entries in current branch)
+      // Falls back to getEntries() if getBranch is not available
+      const getEntriesFn = sessionManager.getBranch ?? sessionManager.getEntries;
+      if (!getEntriesFn) return;
+
+      const entries = getEntriesFn();
+      if (!entries || entries.length === 0) return;
+
+      // Find the last state entry (entries are in order, so we take the last one)
+      const stateEntries = entries.filter(
+        (e: SessionEntry) => e.type === 'custom' && e.customType === VAR_STATE_ENTRY_TYPE
+      );
+
+      if (stateEntries.length === 0) return;
+
+      const lastEntry = stateEntries[stateEntries.length - 1];
+      const persistedState = lastEntry.data as PersistedVarState;
+
+      if (persistedState) {
+        runtime.state.variations = persistedState.variations || [];
+        runtime.state.activeVariationId = persistedState.activeVariationId ?? null;
+        runtime.redirectionActive = runtime.state.activeVariationId !== null;
+      }
     },
   };
 }
