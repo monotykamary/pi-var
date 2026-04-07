@@ -20,7 +20,7 @@ function createMockRuntime(overrides: Partial<VarRuntime> = {}): VarRuntime {
       variations: [],
       sessionId: 'test-session',
     },
-    redirectionActive: false,
+
     lastPersisted: Date.now(),
     ...overrides,
   };

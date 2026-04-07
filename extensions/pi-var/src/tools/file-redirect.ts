@@ -59,14 +59,6 @@ export function resolveVariationPath(inputPath: string, cwd: string, state: VarS
 }
 
 /**
- * Get the active variation for the given runtime
- */
-function getActiveVariation(runtime: VarRuntime): Variation | undefined {
-  if (!runtime.state.activeVariationId) return undefined;
-  return runtime.state.variations.find((v) => v.id === runtime.state.activeVariationId);
-}
-
-/**
  * Create read operations that redirect to the variation directory when active
  */
 export function createRedirectedReadOps(cwd: string, runtime: VarRuntime) {
@@ -81,7 +73,7 @@ export function createRedirectedReadOps(cwd: string, runtime: VarRuntime) {
       return fs.access(resolvedPath, mode);
     },
 
-    detectImageMimeType: async (filePath: string): Promise<string | null> => {
+    detectImageMimeType: async (filePath: string): Promise<string | null | undefined> => {
       const resolvedPath = resolveVariationPath(filePath, cwd, runtime.state);
       try {
         const ext = path.extname(resolvedPath).toLowerCase();

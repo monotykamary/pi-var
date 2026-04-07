@@ -166,7 +166,6 @@ export function registerVarCommand(pi: ExtensionAPI, deps: CommandDeps): void {
             // If this was active, deactivate
             if (runtime.state.activeVariationId === variation.id) {
               runtime.state.activeVariationId = null;
-              runtime.redirectionActive = false;
               ctx.ui.setStatus('pi-var', '');
             }
 
@@ -185,7 +184,6 @@ export function registerVarCommand(pi: ExtensionAPI, deps: CommandDeps): void {
                 (v) => v.id === runtime.state.activeVariationId
               );
               runtime.state.activeVariationId = null;
-              runtime.redirectionActive = false;
               ctx.ui.setStatus('pi-var', '');
 
               // Persist the "stop" state to session

@@ -15,7 +15,7 @@ import type { VarRuntime, Variation } from './src/types/index';
 import { generateVariationName } from './src/utils/names';
 import { getSessionKey, createRuntimeStore } from './src/state/store';
 import { registerVarCommand } from './src/tools/command';
-import { registerRedirectedFileTools } from './src/tools/index';
+import { registerRedirectedTools } from './src/tools/index';
 import { setupVariationEnvironment, detectVariationContext } from './src/utils/environment';
 import { createVariation, mergeVariation } from './src/utils/variations';
 import { Type } from '@sinclair/typebox';
@@ -56,8 +56,8 @@ export default function piVarExtension(pi: ExtensionAPI) {
   // Register /var command (argument-free, status/overview)
   registerVarCommand(pi, { getRuntime, pi, runtimeStore });
 
-  // Register redirected file tools (only when in variation)
-  registerRedirectedFileTools(pi, getRuntime);
+  // Register redirected tools (read, edit, write, bash) - overrides built-ins when variation is active
+  registerRedirectedTools(pi, getRuntime);
 
   // Session lifecycle
   pi.on('session_start', async (event, ctx) => {
@@ -76,7 +76,6 @@ export default function piVarExtension(pi: ExtensionAPI) {
       const existing = runtime.state.variations.find((v) => v.id === context.variationId);
       if (existing) {
         runtime.state.activeVariationId = existing.id;
-        runtime.redirectionActive = true;
         ctx.ui.notify(`Reconnected to variation: ${existing.name}`, 'info');
         // Persist the reconnection
         runtimeStore.persistState(sessionKey, pi);
@@ -99,13 +98,18 @@ export default function piVarExtension(pi: ExtensionAPI) {
         event.systemPrompt +
         `
 
-You are currently working in a variation: "${variation.name}"
-- Source directory: ${variation.sourcePath}
-- Variation directory: ${variation.path}
-- Type: ${variation.type === 'cow' ? 'Copy-on-Write clone' : variation.type === 'worktree' ? 'Git worktree' : 'Full copy'}
+## Active Variation: "${variation.name}"
+You are working in an isolated variation. All operations automatically redirect:
 
-All file operations (read, edit, write) and bash commands are automatically redirected to the variation directory.
-When finished, use the merge_variation tool to merge changes back to the source.
+**File Operations:** read, edit, write → variation directory (${variation.path})
+**Shell Commands:** bash → executes in variation directory with cwd=${variation.path}
+**Environment:** PI_VARIATION=${variation.name}, PI_VARIATION_PATH, PI_SOURCE_PATH set
+
+- Source: ${variation.sourcePath}
+- Variation: ${variation.path}
+- Type: ${variation.type === 'cow' ? 'Copy-on-Write (APFS clonefile)' : variation.type === 'worktree' ? 'Git worktree' : 'Full copy'}
+
+Use tools normally - the extension handles all redirection. When finished, use merge_variation to merge back to source.
 `,
     };
   });
@@ -179,7 +183,6 @@ When finished, use the merge_variation tool to merge changes back to the source.
         // Add to runtime and activate
         runtime.state.variations.push(variation);
         runtime.state.activeVariationId = variation.id;
-        runtime.redirectionActive = true;
 
         // Persist state to session
         runtimeStore.persistState(getSessionKey(ctx), pi);

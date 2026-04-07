@@ -78,8 +78,6 @@ export interface VarConfig {
 export interface VarRuntime {
   /** In-memory state (per-session) */
   state: VarState;
-  /** Whether file redirection is currently active */
-  redirectionActive: boolean;
   /** Last time the state was persisted to JSONL */
   lastPersisted: number;
 }

@@ -42,7 +42,7 @@ function createMockRuntime(
       sessionId: 'test-session',
       ...overrides.state,
     },
-    redirectionActive: false,
+
     lastPersisted: Date.now(),
     ...overrides,
   };
@@ -196,7 +196,7 @@ describe('var command - stop (return to source)', () => {
     await handler('stop', ctx);
 
     expect(runtime.state.activeVariationId).toBeNull();
-    expect(runtime.redirectionActive).toBe(false);
+
     expect(ctx.ui.setStatus).toHaveBeenCalledWith('pi-var', '');
     // Should persist state after stop
     expect(deps.runtimeStore.persistState).toHaveBeenCalled();

@@ -149,11 +149,13 @@ AI actions:
 - Copies: `.env`, `.envrc`, `.npmrc`, `.tool-versions`, etc.
 - Symlinks: `node_modules`, `.next`, `target/`, `.venv/` (saves GBs)
 
-**File redirection:**
+**Tool redirection:**
 
-- All tools automatically resolve to variation path
-- External files (outside project) accessed directly
-- Bash commands execute in variation directory
+- All file tools (`read`, `edit`, `write`) automatically resolve paths to the variation
+- `bash` executes in the variation directory with modified cwd
+- Environment variables set: `PI_VARIATION`, `PI_VARIATION_PATH`, `PI_SOURCE_PATH`, `PI_VARIATION_TYPE`
+- External files (outside project) accessed directly without redirection
+- Other tools using relative paths (grep, find, ls) work correctly because bash sets the cwd
 
 ## Troubleshooting
 

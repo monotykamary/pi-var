@@ -110,9 +110,10 @@ describe('pi-var smoke tests', () => {
       expect(runtime.state.variations).toEqual([]);
 
       // Modify and verify persistence
-      runtime.redirectionActive = true;
+      runtime.state.activeVariationId = 'test-variation';
+
       const retrieved = store.get('session-1');
-      expect(retrieved?.redirectionActive).toBe(true);
+      expect(retrieved?.state.activeVariationId).toBe('test-variation');
 
       // Delete
       const deleted = store.delete('session-1');
@@ -176,7 +177,7 @@ describe('pi-var smoke tests', () => {
 
       const mockRuntime = {
         state: { activeVariationId: null, variations: [], sessionId: 'test' },
-        redirectionActive: false,
+
         lastPersisted: Date.now(),
       };
 
@@ -255,7 +256,7 @@ describe('pi-var smoke tests', () => {
 
       const mockRuntime = {
         state: { activeVariationId: null, variations: [], sessionId: 'test' },
-        redirectionActive: false,
+
         lastPersisted: Date.now(),
       };
 

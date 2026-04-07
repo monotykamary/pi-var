@@ -42,7 +42,6 @@ describe('RuntimeStore', () => {
       expect(runtime.state.sessionId).toBe('session-1');
       expect(runtime.state.activeVariationId).toBeNull();
       expect(runtime.state.variations).toEqual([]);
-      expect(runtime.redirectionActive).toBe(false);
       expect(typeof runtime.lastPersisted).toBe('number');
     });
 
@@ -216,7 +215,7 @@ describe('RuntimeStore', () => {
       expect(runtime.state.variations).toHaveLength(1);
       expect(runtime.state.variations[0].name).toBe('restored-variation');
       expect(runtime.state.activeVariationId).toBe('var-1');
-      expect(runtime.redirectionActive).toBe(true);
+      expect(runtime.state.activeVariationId).not.toBeNull();
     });
 
     it('should restore state from session entries (using getBranch as fallback)', () => {
@@ -307,12 +306,11 @@ describe('RuntimeStore', () => {
       };
 
       const runtime = store.ensure('session-1');
-      runtime.redirectionActive = true;
+      runtime.state.activeVariationId = 'some-variation';
 
       store.restoreState('session-1', mockSessionManager);
 
       expect(runtime.state.activeVariationId).toBeNull();
-      expect(runtime.redirectionActive).toBe(false);
     });
 
     it('should not throw for non-existent session', () => {
@@ -400,11 +398,11 @@ describe('RuntimeStore', () => {
     it('should persist state modifications', () => {
       const runtime = store.ensure('session-1');
 
-      runtime.redirectionActive = true;
+      runtime.state.activeVariationId = 'test-variation';
       runtime.lastPersisted = 1234567890;
 
       const retrieved = store.get('session-1');
-      expect(retrieved?.redirectionActive).toBe(true);
+      expect(retrieved?.state.activeVariationId).toBe('test-variation');
       expect(retrieved?.lastPersisted).toBe(1234567890);
     });
 
@@ -450,7 +448,7 @@ describe('RuntimeStore', () => {
       expect(newRuntime.state.variations).toHaveLength(1);
       expect(newRuntime.state.variations[0].name).toBe('my-variation');
       expect(newRuntime.state.activeVariationId).toBe('var-1');
-      expect(newRuntime.redirectionActive).toBe(true);
+      expect(newRuntime.state.activeVariationId).not.toBeNull();
     });
   });
 });

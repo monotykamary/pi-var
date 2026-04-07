@@ -98,7 +98,6 @@ function createInitialState(sessionId: string): VarState {
 function createRuntime(sessionId: string): VarRuntime {
   return {
     state: createInitialState(sessionId),
-    redirectionActive: false,
     lastPersisted: Date.now(),
   };
 }
@@ -174,7 +173,6 @@ export function createRuntimeStore(): RuntimeStore {
       if (persistedState) {
         runtime.state.variations = persistedState.variations || [];
         runtime.state.activeVariationId = persistedState.activeVariationId ?? null;
-        runtime.redirectionActive = runtime.state.activeVariationId !== null;
       }
     },
   };
