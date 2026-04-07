@@ -3,6 +3,30 @@
  */
 
 /**
+ * EDR detection result
+ */
+export interface EDRDetectionResult {
+  /** Whether any EDR was detected */
+  detected: boolean;
+  /** List of detected EDR process names */
+  found: string[];
+  /** Detailed info about each detected EDR */
+  details: EDRDetails[];
+}
+
+/**
+ * Detailed information about a detected EDR
+ */
+export interface EDRDetails {
+  /** Process name */
+  process: string;
+  /** EDR vendor/product name */
+  product: string;
+  /** Whether this EDR is known to significantly impact CoW operations */
+  knownSlowCoW: boolean;
+}
+
+/**
  * CoW detection result with EDR awareness
  */
 export interface CoWDetectionResult {
