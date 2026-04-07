@@ -177,7 +177,7 @@ describe('RuntimeStore', () => {
   });
 
   describe('restoreState', () => {
-    it('should restore state from session entries (using getBranch)', () => {
+    it('should restore state from session entries (using getEntries)', () => {
       const mockEntries = [
         { type: 'message', id: '1' },
         {
@@ -206,7 +206,7 @@ describe('RuntimeStore', () => {
       ];
 
       const mockSessionManager: SessionManager = {
-        getBranch: () => mockEntries,
+        getEntries: () => mockEntries,
         getSessionId: () => 'session-1',
       };
 
@@ -219,7 +219,7 @@ describe('RuntimeStore', () => {
       expect(runtime.redirectionActive).toBe(true);
     });
 
-    it('should restore state from session entries (using getEntries as fallback)', () => {
+    it('should restore state from session entries (using getBranch as fallback)', () => {
       const mockEntries = [
         {
           type: 'custom',
@@ -232,7 +232,7 @@ describe('RuntimeStore', () => {
       ];
 
       const mockSessionManager: SessionManager = {
-        getEntries: () => mockEntries,
+        getBranch: () => mockEntries,
         getSessionId: () => 'session-1',
       };
 
@@ -322,6 +322,25 @@ describe('RuntimeStore', () => {
       };
 
       expect(() => store.restoreState('non-existent', mockSessionManager)).not.toThrow();
+    });
+
+    it('should not throw when getBranch throws (e.g., during early session_start)', () => {
+      const mockSessionManager: SessionManager = {
+        getEntries: () => {
+          throw new Error('Session not initialized');
+        },
+        getBranch: () => {
+          throw new Error('leafId is undefined');
+        },
+        getSessionId: () => 'session-1',
+      };
+
+      const runtime = store.ensure('session-1');
+      runtime.state.variations = [{ id: 'existing', name: 'existing' } as Variation];
+
+      // Should not throw and should preserve existing state
+      expect(() => store.restoreState('session-1', mockSessionManager)).not.toThrow();
+      expect(runtime.state.variations).toHaveLength(1);
     });
 
     it('should not throw when getBranch and getEntries are unavailable', () => {

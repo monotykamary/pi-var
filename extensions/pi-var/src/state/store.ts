@@ -145,12 +145,20 @@ export function createRuntimeStore(): RuntimeStore {
       const runtime = store.get(sessionKey);
       if (!runtime) return;
 
-      // Use getBranch() for proper tree navigation support (returns entries in current branch)
-      // Falls back to getEntries() if getBranch is not available
-      const getEntriesFn = sessionManager.getBranch ?? sessionManager.getEntries;
-      if (!getEntriesFn) return;
+      // Get entries - prefer getEntries() as it's always available during session_start
+      // getBranch() may fail early in session lifecycle before tree is initialized
+      let entries: SessionEntry[] = [];
+      try {
+        if (sessionManager.getEntries) {
+          entries = sessionManager.getEntries();
+        } else if (sessionManager.getBranch) {
+          entries = sessionManager.getBranch();
+        }
+      } catch {
+        // Session manager may not be fully initialized yet
+        return;
+      }
 
-      const entries = getEntriesFn();
       if (!entries || entries.length === 0) return;
 
       // Find the last state entry (entries are in order, so we take the last one)
