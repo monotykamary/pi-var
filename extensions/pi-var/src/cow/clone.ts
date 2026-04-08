@@ -1,5 +1,7 @@
 /**
- * CoW variation creation using platform-specific clone methods
+ * Low-level CoW clone using platform-specific methods.
+ * This is the filesystem-level clone only — no git branch setup.
+ * For the full variation creation with git branch, use variation/create-cow.ts.
  */
 
 import * as os from 'os';
@@ -12,9 +14,11 @@ import { detectCoWSupport } from './detection';
 const execAsync = promisify(exec);
 
 /**
- * Create a CoW clone using platform-specific methods
+ * Create a CoW clone using platform-specific methods.
+ * Copies the entire source directory (including .git if present)
+ * using copy-on-write for zero-additional-space clones.
  */
-export async function createCoWVariation(sourcePath: string, destPath: string): Promise<void> {
+export async function createCoWClone(sourcePath: string, destPath: string): Promise<void> {
   const platform = os.platform();
   const cowSupport = await detectCoWSupport(path.dirname(destPath));
 

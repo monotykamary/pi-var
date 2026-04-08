@@ -79,6 +79,10 @@ export default function piVarExtension(pi: ExtensionAPI) {
           ? 'Git worktree'
           : 'Full copy';
 
+    const mergeInfo = variation.branchName
+      ? '\n- Merge: Use merge_variation for git three-way merge (conflict detection enabled)'
+      : '';
+
     return {
       systemPrompt:
         event.systemPrompt +
@@ -93,7 +97,7 @@ You are working in an isolated variation. All operations automatically redirect:
 
 - Source: ${variation.sourcePath}
 - Variation: ${variation.path}
-- Type: ${typeLabel}
+- Type: ${typeLabel}${mergeInfo}
 
 Use tools normally - the extension handles all redirection. When finished, use merge_variation to merge back to source.
 `,

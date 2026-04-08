@@ -60,9 +60,17 @@ export function registerMergeVariationTool(
         persistState(ctx);
 
         const action = params.dryRun ? 'Would merge' : 'Merged';
+        const strategyUsed =
+          variation.type === 'cow' && variation.branchName
+            ? ' (via git three-way merge)'
+            : variation.type === 'worktree'
+              ? ' (via git merge)'
+              : '';
         const output = dryRunOutput ? `\n\n${dryRunOutput}` : '';
         const deactivated = !params.dryRun ? ' Now back in source directory.' : '';
-        return text(`${action} variation "${variation.name}" to source.${deactivated}${output}`);
+        return text(
+          `${action} variation "${variation.name}" to source${strategyUsed}.${deactivated}${output}`
+        );
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         return text(`Failed to merge variation: ${message}`);

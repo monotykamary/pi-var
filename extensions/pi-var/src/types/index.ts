@@ -77,8 +77,10 @@ export interface Variation {
   createdAt: string;
   /** Last accessed timestamp */
   lastAccessed: string;
-  /** Git branch name (for worktrees) */
+  /** Git branch name (for worktrees and git-backed CoW variations) */
   branchName?: string;
+  /** The commit SHA the variation was branched from, used as merge base for three-way merge */
+  mergeBaseCommit?: string;
 }
 
 export interface VarState {

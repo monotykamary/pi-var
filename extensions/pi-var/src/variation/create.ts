@@ -26,6 +26,9 @@ function getVariationsBaseDir(sourcePath: string): string {
 /**
  * Create a new variation
  * Auto-selects type: cow > worktree > copy
+ *
+ * CoW variations in git repos automatically get a branch and initial commit
+ * for proper three-way merge semantics (see create-cow.ts).
  */
 export async function createVariation(
   sourcePath: string,
@@ -51,6 +54,7 @@ export async function createVariation(
 
   let type: VariationType;
   let branchName: string | undefined;
+  let mergeBaseCommit: string | undefined;
 
   // Determine variation type
   if (options.type) {
@@ -84,9 +88,13 @@ export async function createVariation(
 
   // Create variation based on type
   switch (type) {
-    case 'cow':
-      await createCoWVariation(sourcePath, variationPath);
+    case 'cow': {
+      // CoW now returns git metadata when the source is a git repo
+      const cowResult = await createCoWVariation(sourcePath, variationPath, name);
+      branchName = cowResult.branchName;
+      mergeBaseCommit = cowResult.mergeBaseCommit;
       break;
+    }
     case 'worktree':
       branchName = await createWorktreeVariation(
         sourcePath,
@@ -114,5 +122,6 @@ export async function createVariation(
     createdAt: now,
     lastAccessed: now,
     branchName,
+    mergeBaseCommit,
   };
 }

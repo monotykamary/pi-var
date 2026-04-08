@@ -38,6 +38,21 @@ export async function removeVariation(variation: Variation): Promise<void> {
       break;
 
     case 'cow':
+      // For git-backed CoW variations, clean up any leftover temporary remote in the source
+      if (variation.branchName) {
+        const safe = variation.name.replace(/[^a-zA-Z0-9-_]/g, '-');
+        const remoteName = `pi-var-${safe}`;
+        try {
+          await execAsync(`git -C "${variation.sourcePath}" remote remove "${remoteName}"`);
+        } catch {
+          // Remote doesn't exist — that's fine
+        }
+      }
+
+      // Simple directory removal
+      await fs.rm(variation.path, { recursive: true, force: true });
+      break;
+
     case 'copy':
       // Simple directory removal
       await fs.rm(variation.path, { recursive: true, force: true });

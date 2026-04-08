@@ -143,6 +143,13 @@ AI actions:
 - macOS APFS: Uses `cp -c` (clonefile) — instant, zero-copy
 - Linux btrfs/xfs: Uses `cp --reflink=auto` — near-instant
 - Falls back to git worktree or full copy automatically
+- **Git-backed merge:** When the source is a git repo, CoW variations automatically get a `var/<name>` branch and an initial commit capturing the source state at creation time. This enables proper git three-way merge on merge_variation, with full conflict detection — merging Variation B after Variation A won't silently overwrite A's changes.
+- Non-git sources fall back to rsync/copy merge with backup protection
+
+**Git worktrees:**
+
+- Creates a proper git worktree with optional `var/<name>` branch
+- Merge uses `git merge` directly (branch is in the same repo)
 
 **Environment sync:**
 
@@ -170,3 +177,6 @@ AI actions:
 
 **Forgot what the variation is for**
 → Names are semantic (e.g., `fix-auth-redirect-bug`), check `/var`
+
+**Merge conflict during merge_variation**
+→ For git-backed CoW and worktree variations, git will report conflicts. Resolve with `git mergetool` and `git commit` in the source directory, or use `merge_variation({ strategy: 'copy' })` to force a copy merge with backup.

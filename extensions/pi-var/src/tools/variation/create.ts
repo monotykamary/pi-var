@@ -88,13 +88,16 @@ export function registerCreateVariationTool(
               ? 'Git worktree'
               : 'Full copy';
 
+        const branchInfo = variation.branchName
+          ? `\nBranch: ${variation.branchName}` +
+            (variation.mergeBaseCommit ? ` (base: ${variation.mergeBaseCommit.slice(0, 8)})` : '')
+          : '';
+
         return text(
           `Created ${typeLabel} variation "${variation.name}" for: ${params.purpose}\n` +
             `Path: ${variation.path}\n\n` +
             `All file operations now redirect to this variation.` +
-            (variation.type === 'worktree' && variation.branchName
-              ? `\nBranch: ${variation.branchName}`
-              : '')
+            branchInfo
         );
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);

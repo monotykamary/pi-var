@@ -20,15 +20,21 @@ export function handleStatus(runtime: VarRuntime, ctx: ExtensionContext): void {
     const isActive = v.id === runtime.state.activeVariationId;
     const indicator = isActive ? '🌿 ' : '   ';
     const typeIcon = v.type === 'cow' ? '⚡' : v.type === 'worktree' ? 'Git' : 'Copy';
-    return `${indicator}${v.name} [${typeIcon}]`;
+    const branchInfo = v.branchName ? ` → ${v.branchName}` : '';
+    return `${indicator}${v.name} [${typeIcon}]${branchInfo}`;
   });
 
   const active = runtime.state.activeVariationId
     ? runtime.state.variations.find((v) => v.id === runtime.state.activeVariationId)
     : null;
 
+  const branchDetail = active?.branchName
+    ? `\nBranch: ${active.branchName}` +
+      (active.mergeBaseCommit ? ` (base: ${active.mergeBaseCommit.slice(0, 8)})` : '')
+    : '';
+
   const header = active
-    ? `Active variation: "${active.name}"\nAll operations redirect to: ${active.path}\n`
+    ? `Active variation: "${active.name}"\nAll operations redirect to: ${active.path}${branchDetail}\n`
     : 'No active variation (working in source)';
 
   ctx.ui.notify(`${header}\n\nVariations:\n${lines.join('\n')}`, 'info');
@@ -44,7 +50,8 @@ export function handleList(runtime: VarRuntime, ctx: ExtensionContext): void {
     const isActive = v.id === runtime.state.activeVariationId;
     const indicator = isActive ? '🌿 ' : '   ';
     const typeIcon = v.type === 'cow' ? '⚡' : v.type === 'worktree' ? 'Git' : 'Copy';
-    return `${indicator}${v.name} [${typeIcon}]`;
+    const branchInfo = v.branchName ? ` → ${v.branchName}` : '';
+    return `${indicator}${v.name} [${typeIcon}]${branchInfo}`;
   });
 
   ctx.ui.notify(`Variations:\n${lines.join('\n')}`, 'info');
