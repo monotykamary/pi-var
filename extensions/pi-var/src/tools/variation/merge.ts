@@ -50,12 +50,19 @@ export function registerMergeVariationTool(
           dryRun: params.dryRun,
         });
 
+        // Deactivate variation after successful merge (not dry-run)
+        if (!params.dryRun) {
+          runtime.state.activeVariationId = null;
+          ctx.ui.setStatus('pi-var', '');
+        }
+
         // Persist state to session
         persistState(ctx);
 
         const action = params.dryRun ? 'Would merge' : 'Merged';
         const output = dryRunOutput ? `\n\n${dryRunOutput}` : '';
-        return text(`${action} variation "${variation.name}" to source.${output}`);
+        const deactivated = !params.dryRun ? ' Now back in source directory.' : '';
+        return text(`${action} variation "${variation.name}" to source.${deactivated}${output}`);
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         return text(`Failed to merge variation: ${message}`);

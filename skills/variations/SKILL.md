@@ -63,10 +63,10 @@ When work is complete:
 
 ```tool
 merge_variation({ dryRun: true })   // Preview changes
-merge_variation({})                  // Merge to source
+merge_variation({})                  // Merge to source & deactivate
 ```
 
-**Variations are never deleted automatically.** They persist after merge for safety and recovery. Use `/var clean` to remove old variations.
+**After merge, the variation is deactivated** — tool redirections turn off and the AI is back in the source directory. The variation files persist on disk for safety and recovery. Use `/var clean` to remove old variations.
 
 The AI should suggest merging when:
 
