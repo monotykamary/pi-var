@@ -4,7 +4,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { registerVarCommand } from '../../src/tools/command/index';
-import type { ExtensionAPI, ExtensionContext } from '@mariozechner/pi-coding-agent';
+import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent';
 import type { VarRuntime, Variation } from '../../src/types/index';
 import type { RuntimeStore } from '../../src/state/types';
 

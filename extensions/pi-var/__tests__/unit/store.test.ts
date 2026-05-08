@@ -11,7 +11,7 @@ import {
   type SessionManager,
 } from '../../src/state/index';
 import type { VarRuntime, Variation } from '../../src/types/index';
-import type { ExtensionAPI } from '@mariozechner/pi-coding-agent';
+import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 
 describe('RuntimeStore', () => {
   let store: ReturnType<typeof createRuntimeStore>;

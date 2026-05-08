@@ -2,7 +2,7 @@
  * /var command status handlers
  */
 
-import type { ExtensionContext } from '@mariozechner/pi-coding-agent';
+import type { ExtensionContext } from '@earendil-works/pi-coding-agent';
 import type { VarRuntime } from '../../types/index';
 
 export function handleStatus(runtime: VarRuntime, ctx: ExtensionContext): void {

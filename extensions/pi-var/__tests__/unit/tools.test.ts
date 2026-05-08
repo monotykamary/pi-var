@@ -3,12 +3,12 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import type { ExtensionAPI, ExtensionContext } from '@mariozechner/pi-coding-agent';
+import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent';
 import type { VarRuntime, VarState, Variation } from '../../src/types/index';
 
 // Mock the SDK
-vi.mock('@mariozechner/pi-coding-agent', async () => {
-  const actual = await vi.importActual('@mariozechner/pi-coding-agent');
+vi.mock('@earendil-works/pi-coding-agent', async () => {
+  const actual = await vi.importActual('@earendil-works/pi-coding-agent');
   return {
     ...actual,
     createReadTool: vi.fn((cwd, options) => ({

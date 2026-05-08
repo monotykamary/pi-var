@@ -2,7 +2,7 @@
  * /var command clean handlers
  */
 
-import type { ExtensionAPI, ExtensionContext } from '@mariozechner/pi-coding-agent';
+import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent';
 import type { VarRuntime } from '../../types/index';
 import { removeVariation } from '../../variation/remove';
 import type { RuntimeStore } from '../../state/types';

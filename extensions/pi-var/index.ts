@@ -10,7 +10,7 @@
  * Port isolation is handled by the AI via bash (portless), not extension code.
  */
 
-import type { ExtensionAPI, ExtensionContext } from '@mariozechner/pi-coding-agent';
+import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent';
 import type { VarRuntime } from './src/types/index';
 import { generateVariationName } from './src/utils/names';
 import { getSessionKey, createRuntimeStore } from './src/state/index';

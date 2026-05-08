@@ -2,7 +2,7 @@
  * /var command registration
  */
 
-import type { ExtensionAPI, ExtensionContext } from '@mariozechner/pi-coding-agent';
+import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent';
 import type { VarRuntime } from '../../types/index';
 import type { RuntimeStore } from '../../state/types';
 import { handleStatus, handleList } from './status';

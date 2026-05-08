@@ -6,8 +6,8 @@ import type {
   ExtensionAPI,
   ExtensionContext,
   AgentToolUpdateCallback,
-} from '@mariozechner/pi-coding-agent';
-import { createEditTool, type EditToolInput } from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';
+import { createEditTool, type EditToolInput } from '@earendil-works/pi-coding-agent';
 import type { VarRuntime } from '../../types/index';
 import { createRedirectedEditOps } from '../file-redirect';
 

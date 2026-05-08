@@ -2,7 +2,7 @@
  * State persistence and restoration
  */
 
-import type { ExtensionAPI } from '@mariozechner/pi-coding-agent';
+import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';
 import { VAR_STATE_ENTRY_TYPE, PersistedVarState, SessionManager, RuntimeStore } from './types.js';
 import type { VarRuntime, VarState } from '../types/index.js';
 

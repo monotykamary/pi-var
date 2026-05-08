@@ -67,4 +67,4 @@ export interface RuntimeStore {
   restoreState(sessionKey: string, sessionManager: SessionManager): void;
 }
 
-import type { ExtensionAPI } from '@mariozechner/pi-coding-agent';
+import type { ExtensionAPI } from '@earendil-works/pi-coding-agent';

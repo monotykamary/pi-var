@@ -2,13 +2,13 @@
  * Redirected tools registration module
  */
 
-import type { ExtensionAPI, ExtensionContext } from '@mariozechner/pi-coding-agent';
+import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent';
 import {
   createReadTool,
   createEditTool,
   createWriteTool,
   createBashTool,
-} from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';
 import type { VarRuntime } from '../../types/index';
 import { createReadHandler } from './read';
 import { createEditHandler } from './edit';

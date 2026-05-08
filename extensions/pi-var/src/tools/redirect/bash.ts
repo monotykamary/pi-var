@@ -6,12 +6,12 @@ import type {
   ExtensionAPI,
   ExtensionContext,
   AgentToolUpdateCallback,
-} from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';
 import {
   createBashTool,
   type BashSpawnContext,
   type BashToolInput,
-} from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';
 import type { VarRuntime } from '../../types/index';
 
 export function createBashHandler(

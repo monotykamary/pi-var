@@ -6,8 +6,8 @@ import type {
   ExtensionAPI,
   ExtensionContext,
   AgentToolUpdateCallback,
-} from '@mariozechner/pi-coding-agent';
-import { createReadTool, type ReadToolInput } from '@mariozechner/pi-coding-agent';
+} from '@earendil-works/pi-coding-agent';
+import { createReadTool, type ReadToolInput } from '@earendil-works/pi-coding-agent';
 import type { VarRuntime } from '../../types/index';
 import { createRedirectedReadOps } from '../file-redirect';
 
