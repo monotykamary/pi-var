@@ -1,6 +1,12 @@
-# pi-var
+<div align="center">
 
-AI-driven copy-on-write variations for pi. Work on multiple features simultaneously with isolated workspaces—automatically.
+# 🌿 pi-var
+
+AI-driven copy-on-write variations for pi. Work on multiple features simultaneously with isolated workspaces — automatically.
+
+</div>
+
+---
 
 ## Philosophy: The AI Does It
 
@@ -18,6 +24,39 @@ Traditional variation management requires you to:
 
 You just say what you want. The AI manages the workspace.
 
+---
+
+## How It Works
+
+```
+User: "Work on the new dashboard feature while I fix this bug in main"
+         │
+         ▼
+   ┌─────────────┐
+   │  pi-var     │  ← AI decides isolation is needed
+   └──────┬──────┘
+          │
+    ┌─────┴─────┐
+    ▼           ▼
+┌───────┐   ┌─────────┐
+│ main  │   │ 🌿 dash │  ← CoW clone (instant, zero copy)
+│ (src) │   │  (src') │
+└───┬───┘   └────┬────┘
+    │            │
+    │ bug fix    │ dashboard feature
+    │            │
+    ▼            ▼
+  merge ◄──────┘
+```
+
+**Auto-detected method** (fastest available):
+
+1. **CoW** (APFS clonefile / Linux reflink) — fastest, instant
+2. **Git worktree** — for git projects on non-CoW filesystems
+3. **Full copy** — universal fallback
+
+---
+
 ## Installation
 
 ```bash
@@ -29,6 +68,8 @@ Or project-local:
 ```bash
 pi install -l https://github.com/monotykamary/pi-var
 ```
+
+---
 
 ## Usage
 
@@ -57,6 +98,8 @@ The AI:
 3. Runs the dev server
 4. All without touching your main server
 
+---
+
 ## For Users: Manual Commands
 
 If you need to intervene or check status:
@@ -68,6 +111,8 @@ If you need to intervene or check status:
 | `/var clean <name>`    | Delete a variation                  |
 | `/var clean --stale 7` | Delete variations older than 7 days |
 | `/var stop`            | Return to source directory          |
+
+---
 
 ## For the AI: Tools Reference
 
@@ -84,12 +129,6 @@ Create an isolated workspace automatically.
 ```
 
 **Auto-generated name:** Creates semantic names from `purpose` (e.g., `fix-auth-redirect-bug`).
-
-**Auto-detected method:**
-
-1. CoW (APFS clonefile / Linux reflink) — fastest, instant
-2. Git worktree — for git projects on non-CoW filesystems
-3. Full copy — universal fallback
 
 **Port isolation:** For dev servers, use `npx portless` via bash:
 
@@ -110,17 +149,9 @@ Merge current variation back to source.
 
 **Variations persist after merge.** They are never automatically deleted to protect against data loss. Use `/var clean` to remove old variations.
 
-## How It Works
+---
 
-### Copy-on-Write (CoW)
-
-When available, pi-var uses filesystem-level copy-on-write:
-
-- **macOS APFS:** `cp -c` uses clonefile — instant, shares data blocks
-- **Linux (btrfs/xfs):** `cp --reflink=auto` — near-instant, CoW on write
-- **Fallback:** Git worktree → Full copy
-
-### Environment Synchronization
+## Environment Synchronization
 
 **Copied files:** `.env`, `.envrc`, `.npmrc`, `.tool-versions`, `.node-version`
 
@@ -128,7 +159,9 @@ When available, pi-var uses filesystem-level copy-on-write:
 
 This saves gigabytes of disk space while ensuring each variation has isolated environment configuration.
 
-### Transparent Redirection
+---
+
+## Transparent Redirection
 
 When a variation is active:
 
@@ -139,6 +172,8 @@ When a variation is active:
 - External paths (outside project) → accessed directly
 
 The footer shows: `🌿 variation-name`
+
+---
 
 ## Comparison
 
@@ -160,13 +195,15 @@ The footer shows: `🌿 variation-name`
 
 Use pi-var for parallel development work. Use Docker for different OS/toolchain environments.
 
+---
+
 ## Configuration
 
 Create `.varconfig.yaml` in project root for custom sync rules:
 
 ```yaml
 # Files to copy
- copy:
+copy:
   - .env.local
   - secrets.json
 
@@ -175,6 +212,8 @@ symlink:
   - node_modules
   - .turbo
 ```
+
+---
 
 ## Development
 
