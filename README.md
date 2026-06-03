@@ -2,9 +2,16 @@
 
 # 🌿 pi-var
 
-AI-driven copy-on-write variations for pi. Work on multiple features simultaneously with isolated workspaces — automatically.
+**AI-driven copy-on-write variations for [pi](https://github.com/earendil-works/pi-coding-agent)**
+
+_Work on multiple features simultaneously with isolated workspaces — automatically._
+
+[![pi extension](https://img.shields.io/badge/pi-extension-blueviolet)](https://github.com/earendil-works/pi-coding-agent)
+[![license](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 
 </div>
+
+---
 
 ---
 
