@@ -1,6 +1,6 @@
 {
   "name": "pi-var",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Copy-on-write variations for pi — work on multiple features simultaneously with isolated workspaces",
   "keywords": [
     "pi-package",
@@ -46,12 +46,12 @@
     "prettier": "3.8.3",
     "simple-git-hooks": "2.13.1",
     "typescript": "6.0.3",
-    "vitest": "4.1.7"
+    "vitest": "4.1.7",
+    "@earendil-works/pi-tui": "0.79.4"
   },
   "peerDependencies": {
     "@earendil-works/pi-ai": ">=0.74.0",
     "@earendil-works/pi-coding-agent": ">=0.74.0",
-    "@earendil-works/pi-tui": ">=0.74.0",
     "@sinclair/typebox": "0.34.49"
   },
   "overrides": {
