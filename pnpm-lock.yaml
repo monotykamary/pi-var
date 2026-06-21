@@ -17,6 +17,9 @@ importers:
       '@sinclair/typebox':
         specifier: 0.34.49
         version: 0.34.49
+      typebox:
+        specifier: 1.1.38
+        version: 1.1.38
     devDependencies:
       '@commitlint/cli':
         specifier: 21.0.1
