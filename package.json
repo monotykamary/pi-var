@@ -1,6 +1,6 @@
 {
   "name": "pi-var",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Copy-on-write variations for pi — work on multiple features simultaneously with isolated workspaces",
   "keywords": [
     "pi-package",
