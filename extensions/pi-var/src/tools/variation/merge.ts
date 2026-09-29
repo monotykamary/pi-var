@@ -3,7 +3,7 @@
  */
 
 import type { ExtensionAPI, ExtensionContext } from '@earendil-works/pi-coding-agent';
-import { Type } from '@sinclair/typebox';
+import { Type } from 'typebox';
 import type { VarRuntime } from '../../types/index';
 import { mergeVariation } from '../../variation/merge/index.js';
 
