@@ -11,6 +11,10 @@ _Work on multiple features simultaneously with isolated workspaces — automatic
 
 </div>
 
+## Pi 1.0 compatibility (1.0.14)
+
+Development SDKs are pinned to **1.0.0**; host-provided dependencies remain wildcard peers. Run `bun run test:pi` for offline real-host registrations, prompt/tool loadouts, nested calls, reload and shutdown. Set `PI1_HOST_PACKAGE` to an installed Pi package directory and `PI1_HOST_ENTRY=bundle` to check its bundled runtime.
+
 ---
 
 ---
