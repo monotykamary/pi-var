@@ -10,6 +10,10 @@
     "variations"
   ],
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/monotykamary/pi-var.git"
+  },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
